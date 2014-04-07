@@ -20,3 +20,4 @@ HEADERS  += filewindow.h
 FORMS    += filewindow.ui
 
 RESOURCES = QtCBM.qrc
+RC_ICONS = QtCBM.ico
