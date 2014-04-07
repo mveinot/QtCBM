@@ -23,13 +23,13 @@
      <number>10</number>
     </property>
     <property name="topMargin">
-     <number>0</number>
+     <number>5</number>
     </property>
     <property name="rightMargin">
      <number>10</number>
     </property>
     <property name="bottomMargin">
-     <number>10</number>
+     <number>5</number>
     </property>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
@@ -540,7 +540,7 @@
      <x>0</x>
      <y>0</y>
      <width>926</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
