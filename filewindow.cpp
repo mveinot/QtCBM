@@ -17,11 +17,11 @@ FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::FileWindow)
 {
-    QFileInfoList volList;
+    //QFileInfoList volList;
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
-    int i;
-    QString qs, sPath;
-    char drive[20];
+    //int i;
+    //QString qs, sPath;
+    //char drive[20];
 
     ui->setupUi(this);
 
@@ -44,6 +44,7 @@ FileWindow::FileWindow(QWidget *parent) :
 
     ui->localFiles->setContextMenuPolicy(Qt::ActionsContextMenu);
 
+    /*
     volList = QDir::drives();
     for (i = 0; i < volList.count(); i++)
     {
@@ -51,10 +52,10 @@ FileWindow::FileWindow(QWidget *parent) :
         strcpy(drive, qs.toLocal8Bit().data());
         ui->localDisks->addItem(drive);
     }
-
+    */
     foldersModel = new QFileSystemModel(this);
     foldersModel->setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
-    foldersModel->setRootPath(ui->localDisks->currentText());
+    foldersModel->setRootPath("c:\\");
     ui->localFolders->setModel(foldersModel);
     ui->localFolders->hideColumn(1);
     ui->localFolders->hideColumn(2);
