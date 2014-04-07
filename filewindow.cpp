@@ -230,3 +230,9 @@ QString FileWindow::formatFileSize(qint64 size)
         return QString::number(outputsize).append(" B");
     }
 }
+
+void FileWindow::on_localFiles_doubleClicked(const QModelIndex &index)
+{
+    (void)index;
+    act_viewFile();
+}

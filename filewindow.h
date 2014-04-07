@@ -31,6 +31,8 @@ private slots:
 
     void act_viewFile();
 
+    void on_localFiles_doubleClicked(const QModelIndex &index);
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
