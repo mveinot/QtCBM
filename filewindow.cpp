@@ -201,7 +201,7 @@ void FileWindow::act_viewFile()
     {
         QMessageBox::warning(this,tr("Error"), tr("Can't run multiple files"), QMessageBox::Ok, QMessageBox::Ok);
     } else {
-        QDesktopServices::openUrl(QUrl("file://"+model->filePath(index.at(0))));
+        QDesktopServices::openUrl(QUrl::fromLocalFile(model->filePath(index.at(0))));
     }
 }
 
