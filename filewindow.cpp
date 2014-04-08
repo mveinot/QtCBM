@@ -5,6 +5,7 @@
 #include <QFileSystemModel>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QSettings>
 #include <QString>
 #include <QUrl>
 
@@ -12,6 +13,7 @@
 
 #include "filewindow.h"
 #include "ui_filewindow.h"
+#include "settingsdialog.h"
 
 FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,6 +26,13 @@ FileWindow::FileWindow(QWidget *parent) :
     //char drive[20];
 
     ui->setupUi(this);
+
+    QSettings settings("mvgrafx", "QtCBM");
+
+    cbmctrl = settings.value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
+    cbmformat = settings.value("tools/cbmformat", QStandardPaths::findExecutable("cbmformat.exe")).toString();
+    cbmforng = settings.value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
+    d64copy = settings.value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
 
     actMakeDir = new QAction(tr("&New Folder..."),this);
     connect(actMakeDir, SIGNAL(triggered()), this, SLOT(act_newFolder()));
@@ -235,4 +244,10 @@ void FileWindow::on_localFiles_doubleClicked(const QModelIndex &index)
 {
     (void)index;
     act_viewFile();
+}
+
+void FileWindow::on_actionPreferences_triggered()
+{
+    settingsDialog *dlg = new settingsDialog();
+    dlg->show();
 }

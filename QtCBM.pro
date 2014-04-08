@@ -13,11 +13,14 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        filewindow.cpp
+        filewindow.cpp \
+    settingsdialog.cpp
 
-HEADERS  += filewindow.h
+HEADERS  += filewindow.h \
+    settingsdialog.h
 
-FORMS    += filewindow.ui
+FORMS    += filewindow.ui \
+    settingsdialog.ui
 
 RESOURCES = QtCBM.qrc
 RC_ICONS = QtCBM.ico

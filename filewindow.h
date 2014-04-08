@@ -33,13 +33,18 @@ private slots:
 
     void on_localFiles_doubleClicked(const QModelIndex &index);
 
+    void on_actionPreferences_triggered();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
     QFileSystemModel *filesModel;
     QItemSelectionModel *selectModel;
     QString formatFileSize(qint64);
-
+    QString cbmctrl;
+    QString cbmformat;
+    QString cbmforng;
+    QString d64copy;
 };
 
 #endif // FILEWINDOW_H
