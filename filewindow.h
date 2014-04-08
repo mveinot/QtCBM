@@ -5,6 +5,7 @@
 #include <QItemSelection>
 #include <QItemSelectionModel>
 #include <QMainWindow>
+#include <QSettings>
 
 namespace Ui {
 class FileWindow;
@@ -16,7 +17,7 @@ class FileWindow : public QMainWindow
 
 public:
     explicit FileWindow(QWidget *parent = 0);
-    ~FileWindow();
+    ~FileWindow();  
 
 private slots:
     void on_localFolders_clicked(const QModelIndex &index);
@@ -35,16 +36,28 @@ private slots:
 
     void on_actionPreferences_triggered();
 
+    void loadSettings();
+
+    void on_CBMStatus_clicked();
+
+    void on_actionView_Drive_triggered();
+
+    void on_actionView_Home_Folder_triggered();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
     QFileSystemModel *filesModel;
     QItemSelectionModel *selectModel;
+    QSettings *settings;
     QString formatFileSize(qint64);
     QString cbmctrl;
-    QString cbmformat;
     QString cbmforng;
     QString d64copy;
+    QString transfermode;
+    bool showcmd;
+    bool autorefresh;
+    int deviceid;
 };
 
 #endif // FILEWINDOW_H

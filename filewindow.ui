@@ -132,6 +132,9 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="headerHidden">
+                   <bool>true</bool>
+                  </property>
                  </widget>
                 </item>
                 <item>
@@ -157,10 +160,18 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="selectedKB"/>
+                   <widget class="QLineEdit" name="selectedKB">
+                    <property name="readOnly">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
                   <item>
-                   <widget class="QLineEdit" name="selectedBlocks"/>
+                   <widget class="QLineEdit" name="selectedBlocks">
+                    <property name="readOnly">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </item>
@@ -217,6 +228,15 @@
              <property name="text">
               <string>-&gt;</string>
              </property>
+             <property name="iconSize">
+              <size>
+               <width>16</width>
+               <height>16</height>
+              </size>
+             </property>
+             <property name="arrowType">
+              <enum>Qt::RightArrow</enum>
+             </property>
             </widget>
            </item>
            <item row="0" column="0">
@@ -236,6 +256,9 @@
             <widget class="QToolButton" name="copyFromCBM">
              <property name="text">
               <string>&lt;-</string>
+             </property>
+             <property name="arrowType">
+              <enum>Qt::LeftArrow</enum>
              </property>
             </widget>
            </item>
@@ -347,16 +370,6 @@
                      <property name="horizontalSpacing">
                       <number>5</number>
                      </property>
-                     <item row="0" column="0">
-                      <widget class="QLineEdit" name="lineEdit">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                      </widget>
-                     </item>
                      <item row="0" column="1">
                       <widget class="QLineEdit" name="lineEdit_2">
                        <property name="sizePolicy">
@@ -373,13 +386,65 @@
                        </property>
                       </widget>
                      </item>
+                     <item row="0" column="0">
+                      <widget class="QLineEdit" name="lineEdit">
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                      </widget>
+                     </item>
                     </layout>
                    </item>
                   </layout>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QListWidget" name="listWidget"/>
+                 <widget class="QTreeWidget" name="cbmFiles">
+                  <property name="rootIsDecorated">
+                   <bool>false</bool>
+                  </property>
+                  <property name="uniformRowHeights">
+                   <bool>true</bool>
+                  </property>
+                  <property name="itemsExpandable">
+                   <bool>false</bool>
+                  </property>
+                  <property name="expandsOnDoubleClick">
+                   <bool>false</bool>
+                  </property>
+                  <property name="columnCount">
+                   <number>4</number>
+                  </property>
+                  <attribute name="headerDefaultSectionSize">
+                   <number>65</number>
+                  </attribute>
+                  <attribute name="headerStretchLastSection">
+                   <bool>true</bool>
+                  </attribute>
+                  <column>
+                   <property name="text">
+                    <string>Blocks</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Size</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Filename</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string>Type</string>
+                   </property>
+                  </column>
+                 </widget>
                 </item>
                </layout>
               </item>
@@ -549,12 +614,63 @@
     </property>
     <addaction name="actionPreferences"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionView_Home_Folder"/>
+    <addaction name="actionView_Drive"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionDetect_Drive"/>
+    <addaction name="actionMorse_Code"/>
+    <addaction name="actionReset_Bus"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuTools"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionPreferences">
    <property name="text">
     <string>Preferences...</string>
+   </property>
+  </action>
+  <action name="actionView_Home_Folder">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>View Home Folder</string>
+   </property>
+  </action>
+  <action name="actionView_Drive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>View Drives</string>
+   </property>
+  </action>
+  <action name="actionDetect_Drive">
+   <property name="text">
+    <string>Detect Drive</string>
+   </property>
+  </action>
+  <action name="actionMorse_Code">
+   <property name="text">
+    <string>Morse Code</string>
+   </property>
+  </action>
+  <action name="actionReset_Bus">
+   <property name="text">
+    <string>Reset Bus</string>
    </property>
   </action>
  </widget>

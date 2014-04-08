@@ -5,7 +5,8 @@
 #include <QFileSystemModel>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QSettings>
+#include <QProcess>
+#include <QProgressBar>
 #include <QString>
 #include <QUrl>
 
@@ -19,20 +20,12 @@ FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::FileWindow)
 {
-    //QFileInfoList volList;
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
-    //int i;
-    //QString qs, sPath;
-    //char drive[20];
 
     ui->setupUi(this);
 
-    QSettings settings("mvgrafx", "QtCBM");
-
-    cbmctrl = settings.value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
-    cbmformat = settings.value("tools/cbmformat", QStandardPaths::findExecutable("cbmformat.exe")).toString();
-    cbmforng = settings.value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
-    d64copy = settings.value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
+    settings = new QSettings("mvgrafx", "QtCBM");
+    loadSettings();
 
     actMakeDir = new QAction(tr("&New Folder..."),this);
     connect(actMakeDir, SIGNAL(triggered()), this, SLOT(act_newFolder()));
@@ -53,23 +46,32 @@ FileWindow::FileWindow(QWidget *parent) :
 
     ui->localFiles->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-    /*
-    volList = QDir::drives();
-    for (i = 0; i < volList.count(); i++)
-    {
-        qs = volList[i].path();
-        strcpy(drive, qs.toLocal8Bit().data());
-        ui->localDisks->addItem(drive);
-    }
-    */
     foldersModel = new QFileSystemModel(this);
     foldersModel->setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
-    foldersModel->setRootPath("c:\\");
+    foldersModel->setRootPath(QDir::rootPath());
     ui->localFolders->setModel(foldersModel);
+    ui->localFolders->setRootIndex(foldersModel->index(QDir::homePath()));
     ui->localFolders->hideColumn(1);
     ui->localFolders->hideColumn(2);
     ui->localFolders->hideColumn(3);
     ui->localFolders->setAnimated(false);
+
+    ui->cbmFiles->header()->resizeSection(0, 50);
+    ui->cbmFiles->header()->resizeSection(1, 50);
+    ui->cbmFiles->header()->resizeSection(2, 150);
+}
+
+void FileWindow::loadSettings()
+{
+    cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
+    cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
+    d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
+    deviceid = settings->value("deviceid", 8).toInt();
+    transfermode = settings->value("transfermode", "auto").toString();
+    showcmd = settings->value("showcmd", false).toBool();
+    autorefresh = settings->value("autorefresh", true).toBool();
+    ui->statusBar->showMessage("Settings read", 5000);
+    qDebug() << cbmctrl << cbmforng << d64copy << deviceid << transfermode << showcmd << autorefresh;
 }
 
 FileWindow::~FileWindow()
@@ -111,7 +113,7 @@ void FileWindow::localFiles_selectionChanged(const QItemSelection &selected, con
         QFile *file = new QFile(model->filePath(index));
         size+=file->size();
     }
-    blocks = size / 256;
+    blocks = size / 254;
     QString sizeString = formatFileSize(size);
     QString blockString = QString::number(blocks);
     ui->selectedKB->setText(sizeString);
@@ -249,5 +251,40 @@ void FileWindow::on_localFiles_doubleClicked(const QModelIndex &index)
 void FileWindow::on_actionPreferences_triggered()
 {
     settingsDialog *dlg = new settingsDialog();
+
+    connect(dlg, SIGNAL(settingsChanged()), this, SLOT(loadSettings()));
+
     dlg->show();
+}
+
+void FileWindow::on_CBMStatus_clicked()
+{
+    QProcess process;
+
+    process.start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+    if (!process.waitForFinished())
+        qDebug() << "execute failed" << process.exitCode();
+    else
+        qDebug() << QString(process.readAllStandardOutput()).split('\n');
+    /*
+    QProgressBar *prog = new QProgressBar();
+    prog->setMinimum(0);
+    prog->setMaximum(100);
+    ui->statusBar->addPermanentWidget(prog);
+    prog->setValue(50);
+    */
+}
+
+void FileWindow::on_actionView_Drive_triggered()
+{
+    ui->localFolders->setRootIndex(foldersModel->index(QDir::rootPath()));
+    ui->actionView_Home_Folder->setChecked(false);
+    ui->actionView_Drive->setChecked(true);
+}
+
+void FileWindow::on_actionView_Home_Folder_triggered()
+{
+    ui->localFolders->setRootIndex(foldersModel->index(QDir::homePath()));
+    ui->actionView_Home_Folder->setChecked(true);
+    ui->actionView_Drive->setChecked(false);
 }
