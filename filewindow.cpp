@@ -361,14 +361,19 @@ void FileWindow::cbmCopyProgress()
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
+    // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+
+    // clear the file list
+    ui->cbmFiles->clear();
+
     QList<QByteArray> dirlist = proc_cbmDir->readAllStandardOutput().split('\n');
     for (int i = 0; i < dirlist.count(); i++)
     {
         QRegExp rxLabel("(0|1)\\s*.\"(.*)\"\\s*(.*)");
         QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
-        QRegExp rxFreeSpace("(\\d+ blocks free.)");
+        QRegExp rxFreeSpace("(\\d+) blocks free.");
         if (rxDirEntry.indexIn(QString(dirlist.at(i))) >= 0)
         {
             QTreeWidgetItem *item = new QTreeWidgetItem();
@@ -379,7 +384,7 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            ui->freeSpace->setText(rxFreeSpace.cap(1));
+            ui->freeSpace->setText(rxFreeSpace.cap(1)+" blocks ("+formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
         } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
         {
             ui->diskLabel->setText(rxLabel.cap(2).trimmed());
