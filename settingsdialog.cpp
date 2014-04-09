@@ -75,4 +75,5 @@ QString settingsDialog::getTransferMode()
         return "parallel";
     if (ui->trAuto->isChecked())
         return "auto";
+    return "auto";
 }

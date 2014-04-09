@@ -276,7 +276,11 @@ void FileWindow::on_CBMStatus_clicked()
 
     proc_cbmStatus->start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
     if (!proc_cbmStatus->waitForStarted())
+    {
         QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+	ui->statusBar->removeWidget(progbar);
+	delete progbar;
+    }
 }
 
 void FileWindow::on_actionView_Drive_triggered()
@@ -334,7 +338,11 @@ void FileWindow::on_copyToCBM_clicked()
 
     proc_d64copy->start(d64copy, QStringList() << fileToCopy << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
     if (!proc_d64copy->waitForStarted())
+    {
         QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+	ui->statusBar->removeWidget(progbar);
+	delete progbar;
+    }
 }
 
 void FileWindow::cbmCopyFinished(int, QProcess::ExitStatus)
@@ -403,5 +411,9 @@ void FileWindow::on_CBMDirectory_clicked()
 
     proc_cbmDir->start(cbmctrl, QStringList() << "dir" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
     if (!proc_cbmDir->waitForStarted())
+    {
         QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+	ui->statusBar->removeWidget(progbar);
+	delete progbar;
+    }
 }
