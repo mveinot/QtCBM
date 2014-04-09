@@ -5,8 +5,8 @@
 #include <QFileSystemModel>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QProcess>
 #include <QProgressBar>
+#include <QRegExp>
 #include <QString>
 #include <QUrl>
 
@@ -23,6 +23,16 @@ FileWindow::FileWindow(QWidget *parent) :
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
 
     ui->setupUi(this);
+
+    proc_cbmStatus = new QProcess(this);
+    connect(proc_cbmStatus, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(cbmStatusFinished(int,QProcess::ExitStatus)));
+
+    proc_d64copy = new QProcess(this);
+    connect(proc_d64copy, SIGNAL(readyReadStandardOutput()), this, SLOT(cbmCopyProgress()));
+    connect(proc_d64copy, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmCopyFinished(int,QProcess::ExitStatus)));
+
+    proc_cbmDir = new QProcess(this);
+    connect(proc_cbmDir, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmDirFinished(int,QProcess::ExitStatus)));
 
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
@@ -57,7 +67,7 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->localFolders->setAnimated(false);
 
     ui->cbmFiles->header()->resizeSection(0, 50);
-    ui->cbmFiles->header()->resizeSection(1, 50);
+    ui->cbmFiles->header()->resizeSection(1, 60);
     ui->cbmFiles->header()->resizeSection(2, 150);
 }
 
@@ -71,7 +81,7 @@ void FileWindow::loadSettings()
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     ui->statusBar->showMessage("Settings read", 5000);
-    qDebug() << cbmctrl << cbmforng << d64copy << deviceid << transfermode << showcmd << autorefresh;
+    //qDebug() << cbmctrl << cbmforng << d64copy << deviceid << transfermode << showcmd << autorefresh;
 }
 
 FileWindow::~FileWindow()
@@ -259,20 +269,14 @@ void FileWindow::on_actionPreferences_triggered()
 
 void FileWindow::on_CBMStatus_clicked()
 {
-    QProcess process;
+    progbar = new QProgressBar(this);
+    progbar->setMinimum(0);
+    progbar->setMaximum(0);
+    ui->statusBar->addPermanentWidget(progbar);
 
-    process.start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
-    if (!process.waitForFinished())
-        qDebug() << "execute failed" << process.exitCode();
-    else
-        qDebug() << QString(process.readAllStandardOutput()).split('\n');
-    /*
-    QProgressBar *prog = new QProgressBar();
-    prog->setMinimum(0);
-    prog->setMaximum(100);
-    ui->statusBar->addPermanentWidget(prog);
-    prog->setValue(50);
-    */
+    proc_cbmStatus->start(cbmctrl, QStringList() << "status" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+    if (!proc_cbmStatus->waitForStarted())
+        QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void FileWindow::on_actionView_Drive_triggered()
@@ -287,4 +291,112 @@ void FileWindow::on_actionView_Home_Folder_triggered()
     ui->localFolders->setRootIndex(foldersModel->index(QDir::homePath()));
     ui->actionView_Home_Folder->setChecked(true);
     ui->actionView_Drive->setChecked(false);
+}
+
+void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+    ui->statusBar->showMessage("Drive status: "+proc_cbmStatus->readAllStandardOutput());
+}
+
+void FileWindow::on_copyToCBM_clicked()
+{
+    QString fileToCopy;
+
+    if (ui->localFiles->model() != NULL)
+    {
+        QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
+        QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
+
+        if (index.count() < 1)
+        {
+            QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        } else if (index.count() > 1)
+        {
+            QMessageBox::warning(this,tr("Error"), tr("Can't image multiple files"), QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        } else {
+            fileToCopy = model->filePath(index.at(0));
+        }
+    } else
+    {
+        QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+    progbar = new QProgressBar(this);
+    progbar->setMinimum(0);
+    progbar->setMaximum(100);
+    ui->statusBar->addPermanentWidget(progbar);
+    ui->copyToCBM->setEnabled(false);
+
+    proc_d64copy->start(d64copy, QStringList() << fileToCopy << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+    if (!proc_d64copy->waitForStarted())
+        QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+}
+
+void FileWindow::cbmCopyFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+    ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
+    ui->copyToCBM->setEnabled(true);
+    on_CBMDirectory_clicked();
+}
+
+void FileWindow::cbmCopyProgress()
+{
+    QRegExp rx("\\s?(\\d+):\\s*\\*+\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
+    if (rx.indexIn(proc_d64copy->readAllStandardOutput()) >= 0)
+    {
+        ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
+        progbar->setValue(rx.cap(2).toInt());
+    } else
+    {
+        ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
+    }
+}
+
+void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+    QList<QByteArray> dirlist = proc_cbmDir->readAllStandardOutput().split('\n');
+    for (int i = 0; i < dirlist.count(); i++)
+    {
+        QRegExp rxLabel("(0|1)\\s*.\"(.*)\"\\s*(.*)");
+        QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
+        QRegExp rxFreeSpace("(\\d+ blocks free.)");
+        if (rxDirEntry.indexIn(QString(dirlist.at(i))) >= 0)
+        {
+            QTreeWidgetItem *item = new QTreeWidgetItem();
+            item->setText(0, rxDirEntry.cap(1));
+            item->setText(1, formatFileSize(rxDirEntry.cap(1).toInt()*254));
+            item->setText(2, rxDirEntry.cap(2).toUpper());
+            item->setText(3, rxDirEntry.cap(3).toUpper());
+            ui->cbmFiles->addTopLevelItem(item);
+        } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
+        {
+            ui->freeSpace->setText(rxFreeSpace.cap(1));
+        } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
+        {
+            ui->diskLabel->setText(rxLabel.cap(2).trimmed());
+            ui->diskId->setText(rxLabel.cap(3));
+        }
+        //qDebug() << QString(dirlist.at(i));
+    }
+}
+
+void FileWindow::on_CBMDirectory_clicked()
+{
+    progbar = new QProgressBar(this);
+    progbar->setMinimum(0);
+    progbar->setMaximum(0);
+    ui->statusBar->addPermanentWidget(progbar);
+
+    proc_cbmDir->start(cbmctrl, QStringList() << "dir" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+    if (!proc_cbmDir->waitForStarted())
+        QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
 }

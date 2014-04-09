@@ -5,6 +5,8 @@
 #include <QItemSelection>
 #include <QItemSelectionModel>
 #include <QMainWindow>
+#include <QProcess>
+#include <QProgressBar>
 #include <QSettings>
 
 namespace Ui {
@@ -37,6 +39,10 @@ private slots:
     void on_actionPreferences_triggered();
 
     void loadSettings();
+    void cbmStatusFinished(int,QProcess::ExitStatus);
+    void cbmCopyProgress();
+    void cbmCopyFinished(int,QProcess::ExitStatus);
+    void cbmDirFinished(int, QProcess::ExitStatus);
 
     void on_CBMStatus_clicked();
 
@@ -44,12 +50,20 @@ private slots:
 
     void on_actionView_Home_Folder_triggered();
 
+    void on_copyToCBM_clicked();
+
+    void on_CBMDirectory_clicked();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
     QFileSystemModel *filesModel;
     QItemSelectionModel *selectModel;
     QSettings *settings;
+    QProcess *proc_cbmStatus;
+    QProcess *proc_d64copy;
+    QProcess *proc_cbmDir;
+    QProgressBar *progbar;
     QString formatFileSize(qint64);
     QString cbmctrl;
     QString cbmforng;

@@ -254,6 +254,9 @@
            </item>
            <item row="2" column="0">
             <widget class="QToolButton" name="copyFromCBM">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="text">
               <string>&lt;-</string>
              </property>
@@ -371,7 +374,7 @@
                       <number>5</number>
                      </property>
                      <item row="0" column="1">
-                      <widget class="QLineEdit" name="lineEdit_2">
+                      <widget class="QLineEdit" name="diskId">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                          <horstretch>0</horstretch>
@@ -384,15 +387,37 @@
                          <height>0</height>
                         </size>
                        </property>
+                       <property name="font">
+                        <font>
+                         <family>Courier</family>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <kerning>false</kerning>
+                        </font>
+                       </property>
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
                       </widget>
                      </item>
                      <item row="0" column="0">
-                      <widget class="QLineEdit" name="lineEdit">
+                      <widget class="QLineEdit" name="diskLabel">
                        <property name="sizePolicy">
                         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <family>Courier</family>
+                         <weight>75</weight>
+                         <bold>true</bold>
+                         <kerning>false</kerning>
+                        </font>
+                       </property>
+                       <property name="readOnly">
+                        <bool>true</bool>
                        </property>
                       </widget>
                      </item>
@@ -403,6 +428,14 @@
                 </item>
                 <item>
                  <widget class="QTreeWidget" name="cbmFiles">
+                  <property name="font">
+                   <font>
+                    <family>Courier</family>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                    <kerning>false</kerning>
+                   </font>
+                  </property>
                   <property name="rootIsDecorated">
                    <bool>false</bool>
                   </property>
@@ -444,6 +477,21 @@
                     <string>Type</string>
                    </property>
                   </column>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLineEdit" name="freeSpace">
+                  <property name="font">
+                   <font>
+                    <family>Courier</family>
+                    <weight>75</weight>
+                    <bold>true</bold>
+                    <kerning>false</kerning>
+                   </font>
+                  </property>
+                  <property name="readOnly">
+                   <bool>true</bool>
+                  </property>
                  </widget>
                 </item>
                </layout>
@@ -505,6 +553,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="CBMFormat">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Format</string>
                   </property>
@@ -512,6 +563,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="CBMInitialize">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Initialize</string>
                   </property>
@@ -539,6 +593,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="CBMRename">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Rename</string>
                   </property>
@@ -546,6 +603,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="CBMScratch">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Scratch</string>
                   </property>
@@ -573,6 +633,9 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="CBMReset">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Reset</string>
                   </property>
@@ -659,16 +722,25 @@
    </property>
   </action>
   <action name="actionDetect_Drive">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Detect Drive</string>
    </property>
   </action>
   <action name="actionMorse_Code">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Morse Code</string>
    </property>
   </action>
   <action name="actionReset_Bus">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Reset Bus</string>
    </property>
