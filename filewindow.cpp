@@ -24,6 +24,7 @@ FileWindow::FileWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    // connect the signals for handling out of thread execution
     proc_cbmStatus = new QProcess(this);
     connect(proc_cbmStatus, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(cbmStatusFinished(int,QProcess::ExitStatus)));
 
@@ -34,9 +35,11 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmDir = new QProcess(this);
     connect(proc_cbmDir, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmDirFinished(int,QProcess::ExitStatus)));
 
+    // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
 
+    // Create our context menu items
     actMakeDir = new QAction(tr("&New Folder..."),this);
     connect(actMakeDir, SIGNAL(triggered()), this, SLOT(act_newFolder()));
     ui->localFolders->addAction(actMakeDir);
@@ -56,6 +59,7 @@ FileWindow::FileWindow(QWidget *parent) :
 
     ui->localFiles->setContextMenuPolicy(Qt::ActionsContextMenu);
 
+    // set up the folders view
     foldersModel = new QFileSystemModel(this);
     foldersModel->setFilter(QDir::NoDotAndDotDot | QDir::Dirs);
     foldersModel->setRootPath(QDir::rootPath());
@@ -66,6 +70,7 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->localFolders->hideColumn(3);
     ui->localFolders->setAnimated(false);
 
+    // size the CBM file list headers
     ui->cbmFiles->header()->resizeSection(0, 50);
     ui->cbmFiles->header()->resizeSection(1, 60);
     ui->cbmFiles->header()->resizeSection(2, 150);
@@ -73,6 +78,7 @@ FileWindow::FileWindow(QWidget *parent) :
 
 void FileWindow::loadSettings()
 {
+    // read in settings
     cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
     cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
     d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
@@ -333,14 +339,21 @@ void FileWindow::on_copyToCBM_clicked()
     progbar = new QProgressBar(this);
     progbar->setMinimum(0);
     progbar->setMaximum(100);
+    progbar->setTextVisible(true);
+//    QPushButton* stopBtn = new QPushButton(this);
+//    stopBtn->setText("Stop");
     ui->statusBar->addPermanentWidget(progbar);
+//    ui->statusBar->addPermanentWidget(stopBtn);
     ui->copyToCBM->setEnabled(false);
+    QFileInfo file(fileToCopy);
+    ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
 
     proc_d64copy->start(d64copy, QStringList() << fileToCopy << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
     if (!proc_d64copy->waitForStarted())
     {
         QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
 	ui->statusBar->removeWidget(progbar);
+//    ui->statusBar->removeWidget(stopBtn);
 	delete progbar;
     }
 }
@@ -359,8 +372,9 @@ void FileWindow::cbmCopyProgress()
     QRegExp rx("\\s?(\\d+):\\s*\\*+\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
     if (rx.indexIn(proc_d64copy->readAllStandardOutput()) >= 0)
     {
-        ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
+        //ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
         progbar->setValue(rx.cap(2).toInt());
+        progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
     } else
     {
         ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
