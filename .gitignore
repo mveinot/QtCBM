@@ -4,3 +4,5 @@ ui_*
 release/
 *.exe
 QtCBM_resource.rc
+*.bak
+*.dat
