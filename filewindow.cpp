@@ -349,37 +349,48 @@ void FileWindow::on_copyToCBM_clicked()
     QFileInfo file(fileToCopy);
     ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
 
+    qDebug() << d64copy << fileToCopy << deviceid;
+
     proc_d64copy->start(d64copy, QStringList() << fileToCopy << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
     if (!proc_d64copy->waitForStarted())
     {
         QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-	ui->statusBar->removeWidget(progbar);
+        ui->statusBar->removeWidget(progbar);
 //    ui->statusBar->removeWidget(stopBtn);
-	delete progbar;
+        delete progbar;
     }
 }
 
-void FileWindow::cbmCopyFinished(int, QProcess::ExitStatus)
+void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 {
+    //qDebug() << status << x;
+    //qDebug() << proc_d64copy->readAllStandardOutput();
     ui->statusBar->removeWidget(progbar);
     delete progbar;
-    ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
+    //ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
     ui->copyToCBM->setEnabled(true);
     on_CBMDirectory_clicked();
 }
 
 void FileWindow::cbmCopyProgress()
 {
-    QRegExp rx("\\s?(\\d+):\\s*[\\*\\.-\\? ]+\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
-    if (rx.indexIn(proc_d64copy->readAllStandardOutput()) >= 0)
+    //qDebug() << "loop";
+    QString output = proc_d64copy->readAllStandardOutput();
+    QRegExp rx("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
+    QRegExp rxTrackChange("\\s?(\\d+):\\s*([\\*\\.\\-\\?]+)\\s*");
+    QRegExp rxDone(".*(\\d+ blocks copied)\\.");
+    if (rx.indexIn(output) >= 0)
     {
         //ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
-        progbar->setValue(rx.cap(2).toInt());
-        progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
-        //qDebug() << "Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4);
-    } else
+        progbar->setValue(rx.cap(3).toInt());
+        progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
+        qDebug() << "Track: "+rx.cap(1)+", Block: "+rx.cap(4)+"/"+rx.cap(5);
+    } else if (rxTrackChange.indexIn(output) >= 0)
     {
-        ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
+        //qDebug() << "Next track detected";
+    } else if (rxDone.indexIn(output) >= 0)
+    {
+        ui->statusBar->showMessage(rxDone.cap(1));
     }
 }
 
