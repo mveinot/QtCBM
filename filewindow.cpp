@@ -384,7 +384,7 @@ void FileWindow::stopCopy()
 
 void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 {
-    QMessageBox::information(this, "Error status", "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status), QMessageBox::Ok, QMessageBox::Ok);
+    qDebug() << "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status);
     (void)x;
     (void)status;
 
@@ -393,12 +393,13 @@ void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
     delete btn_abort;
     delete progbar;
     ui->copyToCBM->setEnabled(true);
-    if (status == 0)
+    if (status == QProcess::NormalExit)
     {
         on_CBMDirectory_clicked();
-    } else
+    } else if (status == QProcess::CrashExit)
     {
         ui->statusBar->clearMessage();
+        on_CBMReset_clicked();
     }
 }
 
