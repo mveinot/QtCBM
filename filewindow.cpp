@@ -352,9 +352,13 @@ void FileWindow::on_copyToCBM_clicked()
     btn_abort->setFixedWidth(18);
     ui->statusBar->addPermanentWidget(progbar);
     ui->statusBar->addPermanentWidget(btn_abort);
+    timer = new QTimer(this);
+    timer->setInterval(10000);
+    connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
     ui->copyToCBM->setEnabled(false);
     QFileInfo file(fileToCopy);
     ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+    d64imageFile = file.baseName()+"."+file.completeSuffix();
 
     //qDebug() << d64copy << fileToCopy << deviceid;
 
@@ -367,10 +371,32 @@ void FileWindow::on_copyToCBM_clicked()
         delete progbar;
         delete btn_abort;
     }
+    timer->start();
+    currBlock = 0;
+    lastBlock = 0;
+}
+
+void FileWindow::timerClick()
+{
+    if (currBlock > lastBlock)
+    {
+        qDebug() << "copy in progress" << currBlock;
+        lastBlock = currBlock;
+    } else
+    {
+        qDebug() << "copy might be stuck";
+        if (QMessageBox::critical(this, "QtCBM", "Trouble writing "+d64imageFile+"\n\nAbort?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+        {
+            stopCopy();
+        } else {
+            lastBlock = currBlock;
+        }
+    }
 }
 
 void FileWindow::stopCopy()
 {
+    timer->stop();
     //qDebug() << "requested abort copy operation";
     proc_d64copy->kill();
     //ui->statusBar->removeWidget(btn_abort);
@@ -384,6 +410,7 @@ void FileWindow::stopCopy()
 
 void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 {
+    timer->stop();
     qDebug() << "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status);
     (void)x;
     (void)status;
@@ -412,6 +439,7 @@ void FileWindow::cbmCopyProgress()
     if (rx.indexIn(output) >= 0)
     {
         progbar->setValue(rx.cap(3).toInt());
+        currBlock = rx.cap(4).toInt();
 #ifdef Q_OS_WIN
         progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
 #endif

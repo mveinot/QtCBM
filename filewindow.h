@@ -9,6 +9,7 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QSettings>
+#include <QTimer>
 
 namespace Ui {
 class FileWindow;
@@ -46,6 +47,7 @@ private slots:
     void cbmDirFinished(int, QProcess::ExitStatus);
     void cbmResetFinished(int, QProcess::ExitStatus);
     void stopCopy();
+    void timerClick();
 
     void on_CBMStatus_clicked();
 
@@ -78,9 +80,13 @@ private:
     QString cbmforng;
     QString d64copy;
     QString transfermode;
+    QString d64imageFile;
+    QTimer *timer;
     bool showcmd;
     bool autorefresh;
     int deviceid;
+    int lastBlock;
+    int currBlock;
 };
 
 #endif // FILEWINDOW_H
