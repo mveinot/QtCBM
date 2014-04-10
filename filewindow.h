@@ -54,6 +54,8 @@ private slots:
 
     void on_CBMDirectory_clicked();
 
+    void on_actionAbout_triggered();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;

@@ -15,6 +15,7 @@
 #include "filewindow.h"
 #include "ui_filewindow.h"
 #include "settingsdialog.h"
+#include "aboutdialog.h"
 
 FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -431,4 +432,10 @@ void FileWindow::on_CBMDirectory_clicked()
 	ui->statusBar->removeWidget(progbar);
 	delete progbar;
     }
+}
+
+void FileWindow::on_actionAbout_triggered()
+{
+    aboutDialog *dlg = new aboutDialog(this);
+    dlg->show();
 }
