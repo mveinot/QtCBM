@@ -383,8 +383,13 @@ void FileWindow::cbmCopyProgress()
     {
         //ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
         progbar->setValue(rx.cap(3).toInt());
+#ifdef Q_OS_WIN
         progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
-        qDebug() << "Track: "+rx.cap(1)+", Block: "+rx.cap(4)+"/"+rx.cap(5);
+#endif
+#ifdef Q_OS_MAC
+        ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(4)+"/"+rx.cap(5));
+#endif
+        //qDebug() << "Track: "+rx.cap(1)+", Block: "+rx.cap(4)+"/"+rx.cap(5);
     } else if (rxTrackChange.indexIn(output) >= 0)
     {
         //qDebug() << "Next track detected";
