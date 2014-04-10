@@ -369,12 +369,13 @@ void FileWindow::cbmCopyFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmCopyProgress()
 {
-    QRegExp rx("\\s?(\\d+):\\s*\\*+\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
+    QRegExp rx("\\s?(\\d+):\\s*[\\*\\.-\\? ]+\\s*(\\d+)%\\s*(\\d+)\\/(\\d+).*");
     if (rx.indexIn(proc_d64copy->readAllStandardOutput()) >= 0)
     {
         //ui->statusBar->showMessage("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
         progbar->setValue(rx.cap(2).toInt());
         progbar->setFormat("Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4));
+        //qDebug() << "Track: "+rx.cap(1)+" Block: "+rx.cap(3)+"/"+rx.cap(4);
     } else
     {
         ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
