@@ -7,6 +7,7 @@
 #include <QMainWindow>
 #include <QProcess>
 #include <QProgressBar>
+#include <QPushButton>
 #include <QSettings>
 
 namespace Ui {
@@ -43,6 +44,7 @@ private slots:
     void cbmCopyProgress();
     void cbmCopyFinished(int,QProcess::ExitStatus);
     void cbmDirFinished(int, QProcess::ExitStatus);
+    void stopCopy();
 
     void on_CBMStatus_clicked();
 
@@ -66,6 +68,7 @@ private:
     QProcess *proc_d64copy;
     QProcess *proc_cbmDir;
     QProgressBar *progbar;
+    QPushButton *btn_abort;
     QString formatFileSize(qint64);
     QString cbmctrl;
     QString cbmforng;
