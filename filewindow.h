@@ -21,6 +21,7 @@ class FileWindow : public QMainWindow
 
 public:
     explicit FileWindow(QWidget *parent = 0);
+    bool confirmExecute(QString command, QStringList params);
     ~FileWindow();  
 
 private slots:
