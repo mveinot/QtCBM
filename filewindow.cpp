@@ -36,6 +36,9 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmDir = new QProcess(this);
     connect(proc_cbmDir, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmDirFinished(int,QProcess::ExitStatus)));
 
+    proc_cbmReset = new QProcess(this);
+    connect(proc_cbmReset, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmResetFinished(int,QProcess::ExitStatus)));
+
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
@@ -361,6 +364,7 @@ void FileWindow::on_copyToCBM_clicked()
         ui->statusBar->removeWidget(progbar);
         ui->statusBar->removeWidget(btn_abort);
         delete progbar;
+        delete btn_abort;
     }
 }
 
@@ -379,7 +383,7 @@ void FileWindow::stopCopy()
 
 void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 {
-//    qDebug() << status << x;
+    QMessageBox::information(this, "Error status", "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status), QMessageBox::Ok, QMessageBox::Ok);
     (void)x;
     (void)status;
 
@@ -419,6 +423,15 @@ void FileWindow::cbmCopyProgress()
     {
         ui->statusBar->showMessage(rxDone.cap(1));
     }
+}
+
+void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
+{
+    // remove the progress bar
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    QMessageBox::information(this, "Bus reset", "The CBM bus has been reset.", QMessageBox::Ok, QMessageBox::Ok);
 }
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
@@ -467,8 +480,8 @@ void FileWindow::on_CBMDirectory_clicked()
     if (!proc_cbmDir->waitForStarted())
     {
         QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-	ui->statusBar->removeWidget(progbar);
-	delete progbar;
+        ui->statusBar->removeWidget(progbar);
+        delete progbar;
     }
 }
 
@@ -476,4 +489,20 @@ void FileWindow::on_actionAbout_triggered()
 {
     aboutDialog *dlg = new aboutDialog(this);
     dlg->show();
+}
+
+void FileWindow::on_CBMReset_clicked()
+{
+    progbar = new QProgressBar(this);
+    progbar->setMinimum(0);
+    progbar->setMaximum(0);
+    ui->statusBar->addPermanentWidget(progbar);
+
+    proc_cbmReset->start(cbmctrl, QStringList() << "reset", QIODevice::ReadWrite | QIODevice::Text);
+    if (!proc_cbmReset->waitForStarted())
+    {
+        QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmReset->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+        ui->statusBar->removeWidget(progbar);
+        delete progbar;
+    }
 }
