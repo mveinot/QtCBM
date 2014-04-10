@@ -347,6 +347,7 @@ void FileWindow::on_copyToCBM_clicked()
     btn_abort = new QPushButton(this);
     connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
     btn_abort->setText("X");
+    btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
     btn_abort->setFixedHeight(18);
     btn_abort->setFixedWidth(18);
     ui->statusBar->addPermanentWidget(progbar);
@@ -431,7 +432,7 @@ void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
     ui->statusBar->removeWidget(progbar);
     delete progbar;
 
-    QMessageBox::information(this, "Bus reset", "The CBM bus has been reset.", QMessageBox::Ok, QMessageBox::Ok);
+    ui->statusBar->showMessage("The CBM bus was reset");
 }
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
