@@ -39,6 +39,9 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmReset = new QProcess(this);
     connect(proc_cbmReset, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmResetFinished(int,QProcess::ExitStatus)));
 
+    proc_cbmFormat = new QProcess(this);
+    connect(proc_cbmFormat, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmFormatFinished(int,QProcess::ExitStatus)));
+
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
@@ -75,9 +78,10 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->localFolders->setAnimated(false);
 
     // size the CBM file list headers
-    ui->cbmFiles->header()->resizeSection(0, 50);
+    ui->cbmFiles->header()->resizeSection(0, 45);
     ui->cbmFiles->header()->resizeSection(1, 60);
-    ui->cbmFiles->header()->resizeSection(2, 150);
+    ui->cbmFiles->header()->resizeSection(2, 140);
+    ui->cbmFiles->header()->resizeSection(3, 40);
 }
 
 void FileWindow::loadSettings()
@@ -343,7 +347,7 @@ void FileWindow::on_copyToCBM_clicked()
         return;
     }
 
-    if (confirmExecute(d64copy, QStringList() << "\""+fileToCopy+"\"" << QString::number(deviceid)))
+    if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << "\""+QDir::toNativeSeparators(fileToCopy)+"\"" << QString::number(deviceid)))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
@@ -365,7 +369,7 @@ void FileWindow::on_copyToCBM_clicked()
         ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
         d64imageFile = file.baseName()+"."+file.completeSuffix();
 
-        proc_d64copy->start(d64copy, QStringList() << "\""+fileToCopy+"\"" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << "\""+QDir::toNativeSeparators(fileToCopy)+"\"" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
         if (!proc_d64copy->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
@@ -468,6 +472,28 @@ void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
     ui->statusBar->showMessage("The CBM bus was reset");
 }
 
+void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
+{
+    QString output = proc_cbmFormat->readAllStandardOutput();
+    qDebug() << output;
+
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    QMessageBox mbx;
+    mbx.setIcon(QMessageBox::Information);
+    mbx.setText("Format complete");
+    mbx.setInformativeText("The operation procuced some output. You can view the details below.");
+    mbx.setStandardButtons(QMessageBox::Ok);
+    mbx.setDefaultButton(QMessageBox::Ok);
+    mbx.setDetailedText(output);
+    mbx.setFixedWidth(600);
+    QSpacerItem* horizontalSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    QGridLayout* layout = (QGridLayout*)mbx.layout();
+    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
+    mbx.exec();
+}
+
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
     // remove the progress bar
@@ -486,7 +512,7 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
         if (rxDirEntry.indexIn(QString(dirlist.at(i))) >= 0)
         {
             QTreeWidgetItem *item = new QTreeWidgetItem();
-            item->setText(0, rxDirEntry.cap(1));
+            item->setText(0, rxDirEntry.cap(1).toUpper());
             item->setText(1, formatFileSize(rxDirEntry.cap(1).toInt()*254));
             item->setText(2, rxDirEntry.cap(2).toUpper());
             item->setText(3, rxDirEntry.cap(3).toUpper());
@@ -553,6 +579,32 @@ void FileWindow::on_CBMReset_clicked()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmReset->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        }
+    }
+}
+
+void FileWindow::on_CBMFormat_clicked()
+{
+    QString diskLabel = "";
+    bool ok;
+
+    if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+    {
+        diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, "", &ok).toUpper();
+        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << "\""+diskLabel+"\""))
+        {
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(0);
+            ui->statusBar->addPermanentWidget(progbar);
+
+            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << "\""+diskLabel+"\"");
+            if (!proc_cbmFormat->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                delete progbar;
+            }
         }
     }
 }

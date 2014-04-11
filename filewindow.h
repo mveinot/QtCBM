@@ -47,6 +47,7 @@ private slots:
     void cbmCopyFinished(int,QProcess::ExitStatus);
     void cbmDirFinished(int, QProcess::ExitStatus);
     void cbmResetFinished(int, QProcess::ExitStatus);
+    void cbmFormatFinished(int, QProcess::ExitStatus);
     void stopCopy();
     void timerClick();
 
@@ -64,6 +65,8 @@ private slots:
 
     void on_CBMReset_clicked();
 
+    void on_CBMFormat_clicked();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
@@ -74,6 +77,7 @@ private:
     QProcess *proc_d64copy;
     QProcess *proc_cbmDir;
     QProcess *proc_cbmReset;
+    QProcess *proc_cbmFormat;
     QProgressBar *progbar;
     QPushButton *btn_abort;
     QString formatFileSize(qint64);
