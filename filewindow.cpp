@@ -95,7 +95,7 @@ void FileWindow::loadSettings()
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     ui->statusBar->showMessage("Settings read", 5000);
-    //qDebug() << cbmctrl << cbmforng << d64copy << deviceid << transfermode << showcmd << autorefresh;
+    qDebug() << cbmctrl << cbmforng << d64copy << deviceid << transfermode << showcmd << autorefresh;
 }
 
 FileWindow::~FileWindow()
