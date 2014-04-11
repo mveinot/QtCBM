@@ -16,6 +16,7 @@
 #include "ui_filewindow.h"
 #include "settingsdialog.h"
 #include "aboutdialog.h"
+#include "detailsinfodialog.h"
 
 FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -480,6 +481,7 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
     ui->statusBar->removeWidget(progbar);
     delete progbar;
 
+    /*
     QMessageBox mbx;
     mbx.setIcon(QMessageBox::Information);
     mbx.setText("Format complete");
@@ -492,6 +494,12 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
     QGridLayout* layout = (QGridLayout*)mbx.layout();
     layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
     mbx.exec();
+    */
+
+    detailsInfoDialog *dlg = new detailsInfoDialog(this);
+    dlg->setText("The format command produced the following output:");
+    dlg->setDetailText(output);
+    dlg->exec();
 }
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
@@ -591,20 +599,27 @@ void FileWindow::on_CBMFormat_clicked()
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, "", &ok).toUpper();
-        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << '"'+diskLabel+'"'))
+        QRegExp rx("[\\s\\S]+,\\d+");
+        if (rx.indexIn(diskLabel) >= 0)
+        {
+        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
         {
             progbar = new QProgressBar(this);
             progbar->setMinimum(0);
             progbar->setMaximum(0);
             ui->statusBar->addPermanentWidget(progbar);
 
-            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << '"'+diskLabel+'"');
+            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
             if (!proc_cbmFormat->waitForStarted())
             {
                 QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
                 ui->statusBar->removeWidget(progbar);
                 delete progbar;
             }
+        }
+        } else
+        {
+            QMessageBox::warning(this, "QtCBM", "Your input wasn't of the form \"Label,ID\". Unable to format with this input.");
         }
     }
 }

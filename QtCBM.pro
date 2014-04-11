@@ -15,15 +15,18 @@ TEMPLATE = app
 SOURCES += main.cpp\
         filewindow.cpp \
     settingsdialog.cpp \
-    aboutdialog.cpp
+    aboutdialog.cpp \
+    detailsinfodialog.cpp
 
 HEADERS  += filewindow.h \
     settingsdialog.h \
-    aboutdialog.h
+    aboutdialog.h \
+    detailsinfodialog.h
 
 FORMS    += filewindow.ui \
     settingsdialog.ui \
-    aboutdialog.ui
+    aboutdialog.ui \
+    detailsinfodialog.ui
 
 RESOURCES = QtCBM.qrc
 RC_ICONS = QtCBM.ico
