@@ -95,7 +95,7 @@ void FileWindow::loadSettings()
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     ui->statusBar->showMessage("Settings read", 5000);
-    QMessageBox::information(this, "settings", cbmctrl+cbmforng+d64copy, QMessageBox::Ok, QMessageBox::Ok);
+    //QMessageBox::information(this, "settings", cbmctrl+cbmforng+d64copy, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 FileWindow::~FileWindow()
@@ -591,14 +591,14 @@ void FileWindow::on_CBMFormat_clicked()
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
         diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, "", &ok).toUpper();
-        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << "\""+diskLabel+"\""))
+        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << '"'+diskLabel+'"'))
         {
             progbar = new QProgressBar(this);
             progbar->setMinimum(0);
             progbar->setMaximum(0);
             ui->statusBar->addPermanentWidget(progbar);
 
-            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << "\""+diskLabel+"\"");
+            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << '"'+diskLabel+'"');
             if (!proc_cbmFormat->waitForStarted())
             {
                 QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
