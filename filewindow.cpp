@@ -347,7 +347,7 @@ void FileWindow::on_copyToCBM_clicked()
         return;
     }
 
-    if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << "\""+QDir::toNativeSeparators(fileToCopy)+"\"" << QString::number(deviceid)))
+    if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid)))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
@@ -369,7 +369,7 @@ void FileWindow::on_copyToCBM_clicked()
         ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
         d64imageFile = file.baseName()+"."+file.completeSuffix();
 
-        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << "\""+QDir::toNativeSeparators(fileToCopy)+"\"" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
         if (!proc_d64copy->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
