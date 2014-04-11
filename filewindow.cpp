@@ -19,6 +19,10 @@
 #include "aboutdialog.h"
 #include "detailsinfodialog.h"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::FileWindow)
