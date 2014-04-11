@@ -6,3 +6,4 @@ release/
 QtCBM_resource.rc
 *.bak
 *.dat
+*.autosave
