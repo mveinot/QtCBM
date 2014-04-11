@@ -1,6 +1,7 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
+#include <QFileDialog>
 #include <QFileInfoList>
 #include <QFileSystemModel>
 #include <QInputDialog>
@@ -441,6 +442,9 @@ void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
     } else if (status == QProcess::CrashExit)
     {
         ui->statusBar->clearMessage();
+#ifdef Q_OS_WIN
+        Sleep(2);
+#endif
         on_CBMReset_clicked();
     }
 }
@@ -666,5 +670,46 @@ void FileWindow::on_CBMValidate_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+    }
+}
+
+void FileWindow::on_copyFromCBM_clicked()
+{
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
+
+    if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(100);
+        progbar->setTextVisible(true);
+        btn_abort = new QPushButton(this);
+        connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
+        btn_abort->setText("X");
+        btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
+        btn_abort->setFixedHeight(18);
+        btn_abort->setFixedWidth(18);
+        ui->statusBar->addPermanentWidget(progbar);
+        ui->statusBar->addPermanentWidget(btn_abort);
+        timer = new QTimer(this);
+        timer->setInterval(10000);
+        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+        ui->copyToCBM->setEnabled(false);
+        QFileInfo file(fileName);
+        ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+        d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_d64copy->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            ui->statusBar->removeWidget(btn_abort);
+            delete progbar;
+            delete btn_abort;
+        }
+        timer->start();
+        currBlock = 0;
+        lastBlock = 0;
     }
 }

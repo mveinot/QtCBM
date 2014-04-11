@@ -255,7 +255,7 @@
            <item row="2" column="0">
             <widget class="QToolButton" name="copyFromCBM">
              <property name="enabled">
-              <bool>false</bool>
+              <bool>true</bool>
              </property>
              <property name="text">
               <string>&lt;-</string>

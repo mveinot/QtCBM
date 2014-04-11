@@ -73,6 +73,8 @@ private slots:
 
     void on_CBMValidate_clicked();
 
+    void on_copyFromCBM_clicked();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
