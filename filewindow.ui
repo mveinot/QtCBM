@@ -564,10 +564,17 @@
                 <item>
                  <widget class="QPushButton" name="CBMInitialize">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>Initialize</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="CBMValidate">
+                  <property name="text">
+                   <string>Validate</string>
                   </property>
                  </widget>
                 </item>

@@ -43,6 +43,12 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmFormat = new QProcess(this);
     connect(proc_cbmFormat, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmFormatFinished(int,QProcess::ExitStatus)));
 
+    proc_cbmInit = new QProcess(this);
+    connect(proc_cbmInit, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmInitFinished(int,QProcess::ExitStatus)));
+
+    proc_cbmValidate = new QProcess(this);
+    connect(proc_cbmValidate, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmValidateFinished(int,QProcess::ExitStatus)));
+
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
@@ -473,28 +479,29 @@ void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
     ui->statusBar->showMessage("The CBM bus was reset");
 }
 
-void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
+void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
-    QString output = proc_cbmFormat->readAllStandardOutput();
-    qDebug() << output;
-
     ui->statusBar->removeWidget(progbar);
     delete progbar;
 
-    /*
-    QMessageBox mbx;
-    mbx.setIcon(QMessageBox::Information);
-    mbx.setText("Format complete");
-    mbx.setInformativeText("The operation procuced some output. You can view the details below.");
-    mbx.setStandardButtons(QMessageBox::Ok);
-    mbx.setDefaultButton(QMessageBox::Ok);
-    mbx.setDetailedText(output);
-    mbx.setFixedWidth(600);
-    QSpacerItem* horizontalSpacer = new QSpacerItem(500, 0, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    QGridLayout* layout = (QGridLayout*)mbx.layout();
-    layout->addItem(horizontalSpacer, layout->rowCount(), 0, 1, layout->columnCount());
-    mbx.exec();
-    */
+    ui->statusBar->showMessage("Initialization complete");
+}
+
+void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    ui->statusBar->showMessage("Validation complete");
+}
+
+void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
+{
+    QString output = proc_cbmFormat->readAllStandardOutput();
+    //qDebug() << output;
+
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
 
     detailsInfoDialog *dlg = new detailsInfoDialog(this);
     dlg->setText("The format command produced the following output:");
@@ -620,6 +627,44 @@ void FileWindow::on_CBMFormat_clicked()
         } else
         {
             QMessageBox::warning(this, "QtCBM", "Your input wasn't of the form \"Label,ID\". Unable to format with this input.");
+        }
+    }
+}
+
+void FileWindow::on_CBMInitialize_clicked()
+{
+    if (confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "IO"))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmInit->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "IO");
+        if (!proc_cbmInit->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmInit->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        }
+    }
+}
+
+void FileWindow::on_CBMValidate_clicked()
+{
+    if (confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "V0:"))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmValidate->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "V0:");
+        if (!proc_cbmValidate->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmValidate->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
         }
     }
 }
