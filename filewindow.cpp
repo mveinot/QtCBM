@@ -4,6 +4,7 @@
 #include <QFileDialog>
 #include <QFileInfoList>
 #include <QFileSystemModel>
+#include <QFontDatabase>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QProgressBar>
@@ -30,6 +31,14 @@ FileWindow::FileWindow(QWidget *parent) :
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
 
     ui->setupUi(this);
+
+    // Load the C64 system font from resources
+    QFontDatabase fontDB;
+    fontDB.addApplicationFont(":/res/fonts/c64.ttf");
+    QFont font("C64 Pro Mono", 8, -1, false);
+
+    QString c64TreeStyle = "QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }";
+    QString c64LineStyle = "QLineEdit {background-color: #4E2EDE; color: #A7A1FD; }";
 
     // connect the signals for handling out of thread execution
     proc_cbmStatus = new QProcess(this);
@@ -94,6 +103,22 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->cbmFiles->header()->resizeSection(1, 60);
     ui->cbmFiles->header()->resizeSection(2, 140);
     ui->cbmFiles->header()->resizeSection(3, 40);
+
+    /*
+    foreach (QString font, fontDB.families())
+    {
+        qDebug() << font;
+    }
+    */
+
+    ui->diskLabel->setFont(font);
+    ui->diskLabel->setStyleSheet(c64LineStyle);
+    ui->diskId->setFont(font);
+    ui->diskId->setStyleSheet(c64LineStyle);
+    ui->freeSpace->setFont(font);
+    ui->freeSpace->setStyleSheet(c64LineStyle);
+    ui->cbmFiles->setFont(font);
+    ui->cbmFiles->setStyleSheet(c64TreeStyle);
 }
 
 void FileWindow::loadSettings()

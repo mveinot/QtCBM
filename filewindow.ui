@@ -303,6 +303,9 @@
          </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
+           <property name="spacing">
+            <number>0</number>
+           </property>
            <item>
             <widget class="QFrame" name="frame_4">
              <property name="frameShape">
@@ -330,7 +333,7 @@
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_3">
                 <property name="spacing">
-                 <number>0</number>
+                 <number>1</number>
                 </property>
                 <item>
                  <widget class="QFrame" name="frame_6">
@@ -371,7 +374,10 @@
                       <enum>QLayout::SetNoConstraint</enum>
                      </property>
                      <property name="horizontalSpacing">
-                      <number>5</number>
+                      <number>4</number>
+                     </property>
+                     <property name="verticalSpacing">
+                      <number>0</number>
                      </property>
                      <item row="0" column="1">
                       <widget class="QLineEdit" name="diskId">
@@ -395,6 +401,9 @@
                          <kerning>false</kerning>
                         </font>
                        </property>
+                       <property name="frame">
+                        <bool>false</bool>
+                       </property>
                        <property name="readOnly">
                         <bool>true</bool>
                        </property>
@@ -416,6 +425,9 @@
                          <kerning>false</kerning>
                         </font>
                        </property>
+                       <property name="frame">
+                        <bool>false</bool>
+                       </property>
                        <property name="readOnly">
                         <bool>true</bool>
                        </property>
@@ -431,6 +443,7 @@
                   <property name="font">
                    <font>
                     <family>Courier</family>
+                    <pointsize>11</pointsize>
                     <weight>75</weight>
                     <bold>true</bold>
                     <kerning>false</kerning>
@@ -488,6 +501,9 @@
                     <bold>true</bold>
                     <kerning>false</kerning>
                    </font>
+                  </property>
+                  <property name="frame">
+                   <bool>false</bool>
                   </property>
                   <property name="readOnly">
                    <bool>true</bool>
