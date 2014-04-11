@@ -1,5 +1,6 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
+#include <QDir>
 #include <QFileDialog>
 #include <QStandardPaths>
 
@@ -36,17 +37,17 @@ settingsDialog::~settingsDialog()
 
 void settingsDialog::on_browse_cbmctrl_clicked()
 {
-    ui->input_cbmctrl->setText(QFileDialog::getOpenFileName(this, tr("Find cbmctrl.exe"), "/", tr("Executable Files (*.exe)")));
+    ui->input_cbmctrl->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmctrl.exe"), "/", tr("Executable Files (*.exe)"))));
 }
 
 void settingsDialog::on_browse_cbmforng_clicked()
 {
-    ui->input_cbmforng->setText(QFileDialog::getOpenFileName(this, tr("Find cbmforng.exe"), "/", tr("Executable Files (*.exe)")));
+    ui->input_cbmforng->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find cbmforng.exe"), "/", tr("Executable Files (*.exe)"))));
 }
 
 void settingsDialog::on_browse_d64copy_clicked()
 {
-    ui->input_d64copy->setText(QFileDialog::getOpenFileName(this, tr("Find d64copy.exe"), "/", tr("Executable Files (*.exe)")));
+    ui->input_d64copy->setText(QDir::toNativeSeparators(QFileDialog::getOpenFileName(this, tr("Find d64copy.exe"), "/", tr("Executable Files (*.exe)"))));
 }
 
 void settingsDialog::on_buttonBox_accepted()
