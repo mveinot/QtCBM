@@ -35,7 +35,8 @@ FileWindow::FileWindow(QWidget *parent) :
     // Load the C64 system font from resources
     QFontDatabase fontDB;
     fontDB.addApplicationFont(":/res/fonts/c64.ttf");
-    QFont font("C64 Pro Mono", 8, -1, false);
+    QFont font8("C64 Pro Mono", 8, -1, false);
+    QFont font11("C64 Pro Mono", 12, -1, false);
 
     QString c64TreeStyle = "QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }";
     QString c64LineStyle = "QLineEdit {background-color: #4E2EDE; color: #A7A1FD; }";
@@ -111,13 +112,13 @@ FileWindow::FileWindow(QWidget *parent) :
     }
     */
 
-    ui->diskLabel->setFont(font);
+    ui->diskLabel->setFont(font11);
     ui->diskLabel->setStyleSheet(c64LineStyle);
-    ui->diskId->setFont(font);
+    ui->diskId->setFont(font11);
     ui->diskId->setStyleSheet(c64LineStyle);
-    ui->freeSpace->setFont(font);
+    ui->freeSpace->setFont(font11);
     ui->freeSpace->setStyleSheet(c64LineStyle);
-    ui->cbmFiles->setFont(font);
+    ui->cbmFiles->setFont(font8);
     ui->cbmFiles->setStyleSheet(c64TreeStyle);
 }
 
