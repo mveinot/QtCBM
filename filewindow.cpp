@@ -10,6 +10,7 @@
 #include <QProgressBar>
 #include <QRegExp>
 #include <QString>
+#include <QTreeWidgetItem>
 #include <QUrl>
 
 #include <QtDebug>
@@ -64,6 +65,12 @@ FileWindow::FileWindow(QWidget *parent) :
     proc_cbmValidate = new QProcess(this);
     connect(proc_cbmValidate, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmValidateFinished(int,QProcess::ExitStatus)));
 
+    proc_cbmScratch = new QProcess(this);
+    connect(proc_cbmScratch, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmScratchFinished(int,QProcess::ExitStatus)));
+
+    proc_cbmRename = new QProcess(this);
+    connect(proc_cbmRename, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmRenameFinished(int,QProcess::ExitStatus)));
+
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
     loadSettings();
@@ -105,25 +112,17 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->cbmFiles->header()->resizeSection(2, 140);
     ui->cbmFiles->header()->resizeSection(3, 40);
 
-    /*
-    foreach (QString font, fontDB.families())
-    {
-        qDebug() << font;
-    }
-    */
-
-    ui->diskLabel->setFont(font11);
+    // set the colors of the CBM elements
     ui->diskLabel->setStyleSheet(c64LineStyle);
-    ui->diskId->setFont(font11);
     ui->diskId->setStyleSheet(c64LineStyle);
-    ui->freeSpace->setFont(font11);
     ui->freeSpace->setStyleSheet(c64LineStyle);
-    ui->cbmFiles->setFont(font8);
     ui->cbmFiles->setStyleSheet(c64TreeStyle);
 }
 
 void FileWindow::loadSettings()
 {
+    QFont font11;
+    QFont font8;
     // read in settings
     cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
     cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
@@ -132,6 +131,27 @@ void FileWindow::loadSettings()
     transfermode = settings->value("transfermode", "auto").toString();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
+    usec64font = settings->value("usec64font", false).toBool();
+
+    // Load the C64 system font from resources
+    fontDB = new QFontDatabase();
+    if (usec64font)
+    {
+        fontDB->addApplicationFont(":/res/fonts/c64.ttf");
+        font8 = QFont("C64 Pro Mono", 8, -1, false);
+        font11 = QFont("C64 Pro Mono", 12, -1, false);
+    } else
+    {
+        fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
+        font8 = QFont("Consolas", 14, -1, false);
+        font11 = QFont("Consolas", 14, -1, false);
+    }
+
+    ui->diskLabel->setFont(font11);
+    ui->diskId->setFont(font11);
+    ui->freeSpace->setFont(font11);
+    ui->cbmFiles->setFont(font8);
+
     ui->statusBar->showMessage("Settings read", 5000);
     //QMessageBox::information(this, "settings", cbmctrl+cbmforng+d64copy, QMessageBox::Ok, QMessageBox::Ok);
 }
@@ -741,5 +761,83 @@ void FileWindow::on_copyFromCBM_clicked()
         timer->start();
         currBlock = 0;
         lastBlock = 0;
+    }
+}
+
+void FileWindow::cbmRenameFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    ui->statusBar->showMessage("File renamed");
+    on_CBMDirectory_clicked();
+}
+
+void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    ui->statusBar->showMessage("File erased");
+    on_CBMDirectory_clicked();
+}
+
+void FileWindow::on_CBMScratch_clicked()
+{
+    QList<QTreeWidgetItem *> items = ui->cbmFiles->selectedItems();
+    if (items.count() != 1)
+    {
+        QMessageBox::warning(this, "QtCBM", "Please select one item to delete.", QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+    QString cbmFilename = items.at(0)->data(2,0).toString();
+
+    if (QMessageBox::question(this, "QtCBM", "Are you sure you want to delete the file \""+cbmFilename+"\" from the current disk?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+    {
+
+        if (confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "S0:"+cbmFilename))
+        {
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(0);
+            ui->statusBar->addPermanentWidget(progbar);
+
+            proc_cbmScratch->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "S0:"+cbmFilename);
+            if (!proc_cbmScratch->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmScratch->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                delete progbar;
+            }
+        }
+    }
+}
+
+void FileWindow::on_CBMRename_clicked()
+{
+    bool ok = false;
+    QList<QTreeWidgetItem *> items = ui->cbmFiles->selectedItems();
+    if (items.count() != 1)
+    {
+        QMessageBox::warning(this, "QtCBM", "Please select a file to rename.", QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+    QString cbmFilename = items.at(0)->data(2,0).toString();
+
+    QString newFilename = QInputDialog::getText(this, "QtCBM", "New filename:", QLineEdit::Normal, "", &ok);
+    if ( ok && confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmRename->start(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename);
+        if (!proc_cbmRename->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmRename->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        }
     }
 }

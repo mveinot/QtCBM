@@ -1,6 +1,7 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-	<file>res/icons/icon.png</file>
-	<file>res/fonts/c64.ttf</file>
-</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>res/icons/icon.png</file>
+        <file>res/fonts/c64.ttf</file>
+        <file>res/fonts/Consolas.ttf</file>
+    </qresource>
 </RCC>

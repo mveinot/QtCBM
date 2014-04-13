@@ -301,6 +301,13 @@
               </widget>
              </item>
              <item>
+              <widget class="QCheckBox" name="useC64font">
+               <property name="text">
+                <string>Use classic font in CBM output</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <spacer name="verticalSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>

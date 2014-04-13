@@ -2,6 +2,7 @@
 #define FILEWINDOW_H
 
 #include <QFileSystemModel>
+#include <QFontDatabase>
 #include <QItemSelection>
 #include <QItemSelectionModel>
 #include <QMainWindow>
@@ -50,6 +51,8 @@ private slots:
     void cbmFormatFinished(int, QProcess::ExitStatus);
     void cbmInitFinished(int, QProcess::ExitStatus);
     void cbmValidateFinished(int, QProcess::ExitStatus);
+    void cbmScratchFinished(int ,QProcess::ExitStatus);
+    void cbmRenameFinished(int ,QProcess::ExitStatus);
     void stopCopy();
     void timerClick();
 
@@ -75,10 +78,15 @@ private slots:
 
     void on_copyFromCBM_clicked();
 
+    void on_CBMScratch_clicked();
+
+    void on_CBMRename_clicked();
+
 private:
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
     QFileSystemModel *filesModel;
+    QFontDatabase *fontDB;
     QItemSelectionModel *selectModel;
     QSettings *settings;
     QProcess *proc_cbmStatus;
@@ -88,6 +96,8 @@ private:
     QProcess *proc_cbmFormat;
     QProcess *proc_cbmInit;
     QProcess *proc_cbmValidate;
+    QProcess *proc_cbmScratch;
+    QProcess *proc_cbmRename;
     QProgressBar *progbar;
     QPushButton *btn_abort;
     QString formatFileSize(qint64);
@@ -99,6 +109,7 @@ private:
     QTimer *timer;
     bool showcmd;
     bool autorefresh;
+    bool usec64font;
     int deviceid;
     int lastBlock;
     int currBlock;

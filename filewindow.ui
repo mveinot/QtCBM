@@ -396,7 +396,7 @@
           <number>5</number>
          </property>
          <property name="rightMargin">
-          <number>0</number>
+          <number>2</number>
          </property>
          <property name="bottomMargin">
           <number>5</number>
@@ -404,7 +404,7 @@
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_5">
            <property name="spacing">
-            <number>0</number>
+            <number>5</number>
            </property>
            <item>
             <widget class="QFrame" name="frame_4">
@@ -433,7 +433,7 @@
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_3">
                 <property name="spacing">
-                 <number>1</number>
+                 <number>4</number>
                 </property>
                 <item>
                  <widget class="QFrame" name="frame_6">
@@ -490,7 +490,7 @@
                        <property name="minimumSize">
                         <size>
                          <width>50</width>
-                         <height>0</height>
+                         <height>25</height>
                         </size>
                        </property>
                        <property name="font">
@@ -502,7 +502,7 @@
                         </font>
                        </property>
                        <property name="frame">
-                        <bool>false</bool>
+                        <bool>true</bool>
                        </property>
                        <property name="readOnly">
                         <bool>true</bool>
@@ -517,6 +517,12 @@
                          <verstretch>0</verstretch>
                         </sizepolicy>
                        </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>25</height>
+                        </size>
+                       </property>
                        <property name="font">
                         <font>
                          <family>Courier</family>
@@ -526,7 +532,7 @@
                         </font>
                        </property>
                        <property name="frame">
-                        <bool>false</bool>
+                        <bool>true</bool>
                        </property>
                        <property name="readOnly">
                         <bool>true</bool>
@@ -548,6 +554,12 @@
                     <bold>true</bold>
                     <kerning>false</kerning>
                    </font>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Sunken</enum>
                   </property>
                   <property name="rootIsDecorated">
                    <bool>false</bool>
@@ -594,6 +606,12 @@
                 </item>
                 <item>
                  <widget class="QLineEdit" name="freeSpace">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>25</height>
+                   </size>
+                  </property>
                   <property name="font">
                    <font>
                     <family>Courier</family>
@@ -603,7 +621,7 @@
                    </font>
                   </property>
                   <property name="frame">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="readOnly">
                    <bool>true</bool>
@@ -640,7 +658,7 @@
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <property name="spacing">
-               <number>0</number>
+               <number>-1</number>
               </property>
               <property name="leftMargin">
                <number>0</number>
@@ -723,7 +741,7 @@
                 <item>
                  <widget class="QPushButton" name="CBMRename">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>Rename</string>
@@ -733,7 +751,7 @@
                 <item>
                  <widget class="QPushButton" name="CBMScratch">
                   <property name="enabled">
-                   <bool>false</bool>
+                   <bool>true</bool>
                   </property>
                   <property name="text">
                    <string>Scratch</string>

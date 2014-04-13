@@ -16,6 +16,7 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->input_cbmdevice->setValue(settings->value("deviceid", 8).toInt());
     ui->autoRefresh->setChecked(settings->value("autorefresh", true).toBool());
     ui->showCommands->setChecked(settings->value("showcmd", false).toBool());
+    ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
     QString transfermode = settings->value("transfermode", "auto").toString();
 
     if (transfermode == "original")
@@ -59,6 +60,7 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("transfermode", getTransferMode());
     settings->setValue("showcmd", ui->showCommands->isChecked());
     settings->setValue("autorefresh", ui->autoRefresh->isChecked());
+    settings->setValue("usec64font", ui->useC64font->isChecked());
     settings->sync();
 
     emit settingsChanged();
