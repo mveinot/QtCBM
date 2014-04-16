@@ -12,6 +12,7 @@
 #include <QString>
 #include <QTreeWidgetItem>
 #include <QUrl>
+#include <string>
 
 #include <QtDebug>
 
@@ -30,15 +31,23 @@ FileWindow::FileWindow(QWidget *parent) :
     ui(new Ui::FileWindow)
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
+    usec64font = NULL;
 
     ui->setupUi(this);
 
     // Load the C64 system font from resources
-    QFontDatabase fontDB;
-    fontDB.addApplicationFont(":/res/fonts/c64.ttf");
-    QFont font8("C64 Pro Mono", 8, -1, false);
-    QFont font11("C64 Pro Mono", 12, -1, false);
+/*    QFontDatabase fontDB;
+//    fontDB.addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
 
+    foreach(QString s, fontDB.families())
+    {
+        //qDebug() << s;
+    }
+
+    QFont font8("C64 Elite Mono", 12, -1, false);
+    QFont font11("C64 Elite Mono", 15, -1, false);
+    qDebug() << font11.exactMatch();
+*/
     QString c64TreeStyle = "QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }";
     QString c64LineStyle = "QLineEdit {background-color: #4E2EDE; color: #A7A1FD; }";
 
@@ -70,6 +79,12 @@ FileWindow::FileWindow(QWidget *parent) :
 
     proc_cbmRename = new QProcess(this);
     connect(proc_cbmRename, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmRenameFinished(int,QProcess::ExitStatus)));
+
+    proc_cbmDetect = new QProcess(this);
+    connect(proc_cbmDetect, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmDetectFinished(int,QProcess::ExitStatus)));
+
+    proc_morse = new QProcess(this);
+    connect(proc_morse, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(morseFinished(int,QProcess::ExitStatus)));
 
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
@@ -124,9 +139,18 @@ void FileWindow::loadSettings()
     QFont font11;
     QFont font8;
     // read in settings
-    cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
+    useInternalcbmctrl = settings->value("internalcbmctrl", true).toBool();
+    if (useInternalcbmctrl)
+    {
+        cbmctrl = ":/res/bin/cbmctrl.exe";
+    } else
+    {
+        cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
+    }
     cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
     d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
+    cbmcopy = settings->value("tools/cbmcopy", QStandardPaths::findExecutable("cbmcopy.exe")).toString();
+    morse = settings->value("tools/morse", QStandardPaths::findExecutable("morse.exe")).toString();
     deviceid = settings->value("deviceid", 8).toInt();
     transfermode = settings->value("transfermode", "auto").toString();
     showcmd = settings->value("showcmd", false).toBool();
@@ -137,9 +161,9 @@ void FileWindow::loadSettings()
     fontDB = new QFontDatabase();
     if (usec64font)
     {
-        fontDB->addApplicationFont(":/res/fonts/c64.ttf");
-        font8 = QFont("C64 Pro Mono", 8, -1, false);
-        font11 = QFont("C64 Pro Mono", 12, -1, false);
+        fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
+        font8 = QFont("C64 Elite Mono", 10, -1, false);
+        font11 = QFont("C64 Elite Mono", 12, -1, false);
     } else
     {
         fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
@@ -495,7 +519,7 @@ void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 #ifdef Q_OS_WIN
         Sleep(2);
 #endif
-        on_CBMReset_clicked();
+        on_actionReset_Bus_triggered();
     }
 }
 
@@ -533,12 +557,37 @@ void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
     ui->statusBar->showMessage("The CBM bus was reset");
 }
 
+void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
+{
+    // remove the progress bar
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+
+    QString output = proc_cbmDetect->readAllStandardOutput().trimmed();
+    qDebug() << output;
+
+    QRegExp rx("(\\d+):\\s*(.*)");
+    if (rx.indexIn(output) >= 0)
+    {
+        QMessageBox::information(this, "QtCBM", "Found drive id "+rx.cap(1)+": "+rx.cap(2), QMessageBox::Ok, QMessageBox::Ok);
+    } else
+    {
+        QMessageBox::warning(this, "QtCBM", "No drives found.", QMessageBox::Ok, QMessageBox::Ok);
+    }
+}
+
 void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
 
     ui->statusBar->showMessage("Initialization complete");
+}
+
+void FileWindow::morseFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
 }
 
 void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
@@ -563,8 +612,101 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
     dlg->exec();
 }
 
+char cbm_petscii2ascii_c(char Character)
+{
+    switch (Character & 0xff) {
+      case 0x0a:
+      case 0x0d:
+          return '\n';
+      case 0x40:
+      case 0x60:
+        return Character;
+      case 0xa0:                                /* CBM: Shifted Space */
+      case 0xe0:
+        return ' ';
+      default:
+        switch (Character & 0xe0) {
+          case 0x40: /* 41 - 7E */
+          case 0x60:
+            return (Character ^ 0x20);
+
+          case 0xc0: /* C0 - DF */
+            return (Character ^ 0x80);
+
+      }
+    }
+
+    return ((isprint(Character) ? Character : '.'));
+}
+
+QString FileWindow::stringToPETSCII(QString pS)
+{
+    QString output = "";
+    if (usec64font)
+    {
+        for (int i = 0; i < pS.length(); i++)
+        {
+            if (pS.at(i).unicode() < 256)
+                output.append(pS.at(i).unicode()+57344);
+            else
+                output.append(pS.at(i).unicode());
+
+            //qDebug() << pS.at(i).unicode();
+        }
+        return output;
+    } else
+        return pS;
+}
+
+QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
+{
+    //QByteArray input = pS.toLocal8Bit();
+
+    QString output = "";
+    if (usec64font)
+    {
+        for (int i = 0; i < pS.length(); i++)
+        {
+            int chr = (unsigned char)pS.at(i);
+            //qDebug() << chr;
+
+            if (keepSpecialChars)
+            {
+                if (chr != 32 && chr != 34 && (chr > 127 || (chr >= 33 && chr < 48) || (chr > 57 && chr <= 91)))
+                {
+                    output.append(QChar(chr+57344));
+                } else
+                {
+                    output.append(QChar(chr));
+                }
+            } else
+            {
+                if (chr >= 32 && chr <= 91)
+                {
+                    output.append(QChar(chr+57344));
+                } else if (chr >= 97 && chr <= 122)
+                {
+                    output.append(QChar(chr-32+57344));
+                } else
+                {
+                    output.append(QChar(chr));
+                }
+            }
+        }
+    } else
+    {
+        for (int i = 0; i < pS.length(); i++)
+        {
+            int chr = (unsigned char)pS.at(i);
+            output.append(QChar(cbm_petscii2ascii_c(chr)));
+        }
+    }
+    return output;
+}
+
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
+    //qDebug() << "dir finished";
     // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
@@ -572,30 +714,44 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     // clear the file list
     ui->cbmFiles->clear();
 
+    //qDebug() << proc_cbmDir->readAllStandardOutput();
+
     QList<QByteArray> dirlist = proc_cbmDir->readAllStandardOutput().split('\n');
     for (int i = 0; i < dirlist.count(); i++)
     {
+        //qDebug() << dirlist.at(i);
         QRegExp rxLabel("(0|1)\\s*.\"(.*)\"\\s*(.*)");
         QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
-        QRegExp rxFreeSpace("(\\d+) blocks free.");
-        if (rxDirEntry.indexIn(QString(dirlist.at(i))) >= 0)
+        QRegExp rxFreeSpace("(\\d+)\\s\\S\\S\\S\\S\\S\\S\\s\\S\\S\\S\\S");
+
+        //QString regstring = QString::fromLocal8Bit(dirlist.at(i));
+        QString regstring = stringToPETSCII(dirlist.at(i));
+
+        //qDebug() << regstring;
+
+        if (rxDirEntry.indexIn(regstring) >= 0)
         {
             QTreeWidgetItem *item = new QTreeWidgetItem();
-            item->setText(0, rxDirEntry.cap(1).toUpper());
-            item->setText(1, formatFileSize(rxDirEntry.cap(1).toInt()*254));
-            item->setText(2, rxDirEntry.cap(2).toUpper());
+            item->setText(0, stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false));
+            item->setText(1, stringToPETSCII(formatFileSize(rxDirEntry.cap(1).toInt()*254)));
+            item->setText(2, stringToPETSCII(rxDirEntry.cap(2)));
+            //qDebug() << rxDirEntry.cap(2);
             item->setText(3, rxDirEntry.cap(3).toUpper());
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            ui->freeSpace->setText(rxFreeSpace.cap(1)+" blocks ("+formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
+            QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks ("+formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
+            ui->freeSpace->setText(stringToPETSCII(tmp_fs.toLatin1(), false));
         } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            ui->diskLabel->setText(rxLabel.cap(2).trimmed());
-            ui->diskId->setText(rxLabel.cap(3));
+            ui->diskLabel->setText(stringToPETSCII(rxLabel.cap(2).trimmed()));
+            ui->diskId->setText(stringToPETSCII(rxLabel.cap(3).trimmed()));
         }
         //qDebug() << QString(dirlist.at(i));
     }
+    ui->cbmFiles->resizeColumnToContents(0);
+    ui->cbmFiles->resizeColumnToContents(1);
+    ui->cbmFiles->resizeColumnToContents(2);
 }
 
 bool FileWindow::confirmExecute(QString command, QStringList params)
@@ -612,6 +768,7 @@ void FileWindow::on_CBMDirectory_clicked()
 {
     if(confirmExecute(cbmctrl, QStringList() << "dir" << QString::number(deviceid)))
     {
+        qDebug() << "going to run the program";
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
         progbar->setMaximum(0);
@@ -620,6 +777,7 @@ void FileWindow::on_CBMDirectory_clicked()
         proc_cbmDir->start(cbmctrl, QStringList() << "dir" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
         if (!proc_cbmDir->waitForStarted())
         {
+            qDebug() << "failed to run";
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
@@ -631,25 +789,6 @@ void FileWindow::on_actionAbout_triggered()
 {
     aboutDialog *dlg = new aboutDialog(this);
     dlg->show();
-}
-
-void FileWindow::on_CBMReset_clicked()
-{
-    if (confirmExecute(cbmctrl, QStringList() << "reset"))
-    {
-        progbar = new QProgressBar(this);
-        progbar->setMinimum(0);
-        progbar->setMaximum(0);
-        ui->statusBar->addPermanentWidget(progbar);
-
-        proc_cbmReset->start(cbmctrl, QStringList() << "reset", QIODevice::ReadWrite | QIODevice::Text);
-        if (!proc_cbmReset->waitForStarted())
-        {
-            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmReset->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-            ui->statusBar->removeWidget(progbar);
-            delete progbar;
-        }
-    }
 }
 
 void FileWindow::on_CBMFormat_clicked()
@@ -836,6 +975,63 @@ void FileWindow::on_CBMRename_clicked()
         if (!proc_cbmRename->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmRename->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        }
+    }
+}
+
+void FileWindow::on_actionReset_Bus_triggered()
+{
+    if (confirmExecute(cbmctrl, QStringList() << "reset"))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmReset->start(cbmctrl, QStringList() << "reset", QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_cbmReset->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmReset->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        }
+    }
+}
+
+void FileWindow::on_actionDetect_Drive_triggered()
+{
+    if (confirmExecute(cbmctrl, QStringList() << "detect"))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_cbmDetect->start(cbmctrl, QStringList() << "detect", QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_cbmDetect->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDetect->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            delete progbar;
+        }
+    }
+}
+
+void FileWindow::on_actionMorse_Code_triggered()
+{
+    if (confirmExecute(morse, QStringList() << "8"))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        ui->statusBar->addPermanentWidget(progbar);
+
+        proc_morse->start(morse, QStringList() << "8", QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_morse->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+morse+"\n\nExit status: "+QString::number(proc_morse->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }

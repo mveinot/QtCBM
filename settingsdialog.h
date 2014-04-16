@@ -31,6 +31,10 @@ private slots:
 
     void on_buttonBox_accepted();
 
+    void on_browse_cbmcopy_clicked();
+
+    void on_browse_morse_clicked();
+
 private:
     Ui::settingsDialog *ui;
     QSettings *settings;

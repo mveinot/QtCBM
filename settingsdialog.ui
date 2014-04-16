@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>690</width>
-    <height>364</height>
+    <height>425</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -54,6 +54,9 @@
         </property>
         <item row="0" column="0">
          <layout class="QGridLayout" name="gridLayout">
+          <item row="3" column="2">
+           <widget class="QLineEdit" name="input_cbmcopy"/>
+          </item>
           <item row="1" column="0">
            <widget class="QLabel" name="label_3">
             <property name="text">
@@ -75,35 +78,66 @@
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
+          <item row="1" column="3">
            <widget class="QPushButton" name="browse_cbmforng">
             <property name="text">
              <string>Browse...</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
+          <item row="0" column="3">
            <widget class="QPushButton" name="browse_cbmctrl">
             <property name="text">
              <string>Browse...</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
+          <item row="0" column="2">
            <widget class="QLineEdit" name="input_cbmctrl"/>
           </item>
-          <item row="1" column="1">
+          <item row="1" column="2">
            <widget class="QLineEdit" name="input_cbmforng"/>
           </item>
-          <item row="2" column="2">
+          <item row="2" column="3">
            <widget class="QPushButton" name="browse_d64copy">
             <property name="text">
              <string>Browse...</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="1">
+          <item row="2" column="2">
            <widget class="QLineEdit" name="input_d64copy"/>
+          </item>
+          <item row="3" column="3">
+           <widget class="QPushButton" name="browse_cbmcopy">
+            <property name="text">
+             <string>Browse...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>cbmcopy</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QPushButton" name="browse_morse">
+            <property name="text">
+             <string>Browse...</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="2">
+           <widget class="QLineEdit" name="input_morse"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>morse</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -288,6 +322,9 @@
             <layout class="QVBoxLayout" name="verticalLayout_5">
              <item>
               <widget class="QCheckBox" name="showCommands">
+               <property name="toolTip">
+                <string>Display a dialog showing the commands that will be executed and provide the opportunity to abort</string>
+               </property>
                <property name="text">
                 <string>Preview CBM commands</string>
                </property>
@@ -295,6 +332,9 @@
              </item>
              <item>
               <widget class="QCheckBox" name="autoRefresh">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>Automatically refresh after write operation</string>
                </property>
@@ -302,8 +342,21 @@
              </item>
              <item>
               <widget class="QCheckBox" name="useC64font">
+               <property name="toolTip">
+                <string>Use a C64-like font that contains PETSCII characters</string>
+               </property>
                <property name="text">
                 <string>Use classic font in CBM output</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="useInternalCBMctrl">
+               <property name="toolTip">
+                <string>The customized internal cbmctrl.exe allows QtCBM to display PETSCII characters in the directory listing when the classic font is selected</string>
+               </property>
+               <property name="text">
+                <string>Use customized internal cbmctrl.exe</string>
                </property>
               </widget>
              </item>

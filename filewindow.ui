@@ -779,16 +779,6 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="CBMReset">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Reset</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
                  <widget class="QPushButton" name="CBMStatus">
                   <property name="text">
                    <string>Status</string>
@@ -877,7 +867,7 @@
   </action>
   <action name="actionDetect_Drive">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Detect Drive</string>
@@ -885,7 +875,7 @@
   </action>
   <action name="actionMorse_Code">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Morse Code</string>
@@ -893,7 +883,7 @@
   </action>
   <action name="actionReset_Bus">
    <property name="enabled">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Reset Bus</string>

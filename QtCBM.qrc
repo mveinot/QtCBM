@@ -1,7 +1,8 @@
 <RCC>
     <qresource prefix="/">
+		<file>res/bin/cbmctrl.exe</file>
         <file>res/icons/icon.png</file>
-        <file>res/fonts/c64.ttf</file>
+        <file>res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf</file>
         <file>res/fonts/Consolas.ttf</file>
     </qresource>
 </RCC>

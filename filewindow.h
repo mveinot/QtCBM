@@ -23,6 +23,8 @@ class FileWindow : public QMainWindow
 public:
     explicit FileWindow(QWidget *parent = 0);
     bool confirmExecute(QString command, QStringList params);
+    QString stringToPETSCII(QByteArray, bool);
+    QString stringToPETSCII(QString);
     ~FileWindow();  
 
 private slots:
@@ -53,6 +55,8 @@ private slots:
     void cbmValidateFinished(int, QProcess::ExitStatus);
     void cbmScratchFinished(int ,QProcess::ExitStatus);
     void cbmRenameFinished(int ,QProcess::ExitStatus);
+    void cbmDetectFinished(int, QProcess::ExitStatus);
+    void morseFinished(int, QProcess::ExitStatus);
     void stopCopy();
     void timerClick();
 
@@ -68,8 +72,6 @@ private slots:
 
     void on_actionAbout_triggered();
 
-    void on_CBMReset_clicked();
-
     void on_CBMFormat_clicked();
 
     void on_CBMInitialize_clicked();
@@ -82,13 +84,26 @@ private slots:
 
     void on_CBMRename_clicked();
 
+    void on_actionReset_Bus_triggered();
+
+    void on_actionDetect_Drive_triggered();
+
+    void on_actionMorse_Code_triggered();
+
 private:
+
+    // Qt objects
     Ui::FileWindow *ui;
     QFileSystemModel *foldersModel;
     QFileSystemModel *filesModel;
     QFontDatabase *fontDB;
     QItemSelectionModel *selectModel;
     QSettings *settings;
+    QProgressBar *progbar;
+    QPushButton *btn_abort;
+    QTimer *timer;
+
+    // Process pointers
     QProcess *proc_cbmStatus;
     QProcess *proc_d64copy;
     QProcess *proc_cbmDir;
@@ -98,18 +113,24 @@ private:
     QProcess *proc_cbmValidate;
     QProcess *proc_cbmScratch;
     QProcess *proc_cbmRename;
-    QProgressBar *progbar;
-    QPushButton *btn_abort;
+    QProcess *proc_cbmDetect;
+    QProcess *proc_morse;
+
+    // strings
     QString formatFileSize(qint64);
     QString cbmctrl;
     QString cbmforng;
     QString d64copy;
+    QString cbmcopy;
+    QString morse;
     QString transfermode;
     QString d64imageFile;
-    QTimer *timer;
+
+    // other variables
     bool showcmd;
     bool autorefresh;
     bool usec64font;
+    bool useInternalcbmctrl;
     int deviceid;
     int lastBlock;
     int currBlock;
