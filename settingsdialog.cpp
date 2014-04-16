@@ -21,6 +21,7 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
     ui->useInternalCBMctrl->setChecked(settings->value("internalcbmctrl", true).toBool());
     QString transfermode = settings->value("transfermode", "auto").toString();
+    on_useC64font_clicked(ui->useC64font->isChecked());
 
     if (transfermode == "original")
         ui->trOriginal->setChecked(true);
@@ -98,3 +99,15 @@ QString settingsDialog::getTransferMode()
 }
 
 
+
+void settingsDialog::on_useC64font_clicked(bool checked)
+{
+    if (!checked)
+    {
+        ui->useInternalCBMctrl->setChecked(false);
+        ui->useInternalCBMctrl->setEnabled(false);
+    } else
+    {
+        ui->useInternalCBMctrl->setEnabled(true);
+    }
+}
