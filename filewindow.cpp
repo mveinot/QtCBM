@@ -161,9 +161,17 @@ void FileWindow::loadSettings()
     fontDB = new QFontDatabase();
     if (usec64font)
     {
-        fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
-        font8 = QFont("C64 Elite Mono", 10, -1, false);
-        font11 = QFont("C64 Elite Mono", 12, -1, false);
+        if (useInternalcbmctrl)
+        {
+            fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
+            font8 = QFont("C64 Elite Mono", 8, -1, false);
+            font11 = QFont("C64 Elite Mono", 11, -1, false);
+        } else
+        {
+            fontDB->addApplicationFont(":/res/fonts/c64.ttf");
+            font8 = QFont("C64 Pro Mono", 8, -1, false);
+            font11 = QFont("C64 Pro Mono", 11, -1, false);
+        }
     } else
     {
         fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
