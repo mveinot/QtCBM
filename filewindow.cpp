@@ -642,7 +642,7 @@ char cbm_petscii2ascii_c(char Character)
 QString FileWindow::stringToPETSCII(QString pS)
 {
     QString output = "";
-    if (usec64font)
+    if (usec64font && useInternalcbmctrl)
     {
         for (int i = 0; i < pS.length(); i++)
         {
@@ -663,7 +663,7 @@ QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
     //QByteArray input = pS.toLocal8Bit();
 
     QString output = "";
-    if (usec64font)
+    if (usec64font && useInternalcbmctrl)
     {
         for (int i = 0; i < pS.length(); i++)
         {
