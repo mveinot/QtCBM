@@ -142,7 +142,7 @@ void FileWindow::loadSettings()
     useInternalcbmctrl = settings->value("internalcbmctrl", true).toBool();
     if (useInternalcbmctrl)
     {
-        cbmctrl = ":/res/bin/cbmctrl.exe";
+        cbmctrl = QCoreApplication::applicationDirPath()+"/cbmctrl.exe";
     } else
     {
         cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
