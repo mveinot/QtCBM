@@ -117,6 +117,7 @@ private:
     QProcess *proc_morse;
 
     // strings
+    QString selectedLocalFolder;
     QString formatFileSize(qint64);
     QString cbmctrl;
     QString cbmforng;

@@ -32,22 +32,10 @@ FileWindow::FileWindow(QWidget *parent) :
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
     usec64font = NULL;
+    selectedLocalFolder = "";
 
     ui->setupUi(this);
 
-    // Load the C64 system font from resources
-/*    QFontDatabase fontDB;
-//    fontDB.addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
-
-    foreach(QString s, fontDB.families())
-    {
-        //qDebug() << s;
-    }
-
-    QFont font8("C64 Elite Mono", 12, -1, false);
-    QFont font11("C64 Elite Mono", 15, -1, false);
-    qDebug() << font11.exactMatch();
-*/
     QString c64TreeStyle = "QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }";
     QString c64LineStyle = "QLineEdit {background-color: #4E2EDE; color: #A7A1FD; }";
 
@@ -164,13 +152,13 @@ void FileWindow::loadSettings()
         if (useInternalcbmctrl)
         {
             fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
-            font8 = QFont("C64 Elite Mono", 8, -1, false);
-            font11 = QFont("C64 Elite Mono", 11, -1, false);
+            font8 = QFont("C64 Elite Mono", 7, -1, false);
+            font11 = QFont("C64 Elite Mono", 10, -1, false);
         } else
         {
             fontDB->addApplicationFont(":/res/fonts/c64.ttf");
-            font8 = QFont("C64 Pro Mono", 8, -1, false);
-            font11 = QFont("C64 Pro Mono", 11, -1, false);
+            font8 = QFont("C64 Pro Mono", 7, -1, false);
+            font11 = QFont("C64 Pro Mono", 10, -1, false);
         }
     } else
     {
@@ -203,6 +191,7 @@ void FileWindow::on_localFolders_clicked(const QModelIndex &index)
     filesModel->setRootPath(dir->path());
     ui->localFiles->setModel(filesModel);
     ui->localFiles->setRootIndex(filesModel->index(dir->path()));
+    selectedLocalFolder = dir->path();
     ui->localFiles->setCurrentIndex(filesModel->index(0,0,ui->localFiles->rootIndex()));
     ui->localFiles->setUniformItemSizes(true);
 
@@ -437,40 +426,54 @@ void FileWindow::on_copyToCBM_clicked()
         return;
     }
 
-    if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid)))
+    QFileInfo fileinfo(fileToCopy);
+    QString ext = fileinfo.completeSuffix().toUpper();
+    if (ext == "D64")
     {
-        progbar = new QProgressBar(this);
-        progbar->setMinimum(0);
-        progbar->setMaximum(100);
-        progbar->setTextVisible(true);
-        btn_abort = new QPushButton(this);
-        connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
-        btn_abort->setText("X");
-        btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
-        btn_abort->setFixedHeight(18);
-        btn_abort->setFixedWidth(18);
-        ui->statusBar->addPermanentWidget(progbar);
-        ui->statusBar->addPermanentWidget(btn_abort);
-        timer = new QTimer(this);
-        timer->setInterval(10000);
-        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
-        ui->copyToCBM->setEnabled(false);
-        QFileInfo file(fileToCopy);
-        ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
-        d64imageFile = file.baseName()+"."+file.completeSuffix();
-
-        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
-        if (!proc_d64copy->waitForStarted())
+        if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid)))
         {
-            QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-            ui->statusBar->removeWidget(progbar);
-            ui->statusBar->removeWidget(btn_abort);
-            delete progbar;
-            delete btn_abort;
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(100);
+            progbar->setTextVisible(true);
+            btn_abort = new QPushButton(this);
+            connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
+            btn_abort->setText("X");
+            btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
+            btn_abort->setFixedHeight(18);
+            btn_abort->setFixedWidth(18);
+            ui->statusBar->addPermanentWidget(progbar);
+            ui->statusBar->addPermanentWidget(btn_abort);
+            timer = new QTimer(this);
+            timer->setInterval(10000);
+            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+            ui->copyToCBM->setEnabled(false);
+            QFileInfo file(fileToCopy);
+            ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+            d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+            proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(fileToCopy) << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+            if (!proc_d64copy->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                ui->statusBar->removeWidget(btn_abort);
+                delete progbar;
+                delete btn_abort;
+            }
+            timer->start();
+            currBlock = 0;
+            lastBlock = 0;
         }
-        timer->start();
-        currBlock = 0;
-        lastBlock = 0;
+    } else if (ext == "PRG" || ext == "SEQ" || ext == "P00" || ext == "T64" || ext == "BIN")
+    {
+        if (confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()+"."+fileinfo.completeSuffix()))
+        {
+            qDebug() << "copy file";
+        }
+    } else
+    {
+        QMessageBox::information(this, "QtCBM", fileinfo.completeSuffix().toUpper()+" is not a valid filetype to transfer", QMessageBox::Ok, QMessageBox::Ok);
     }
 }
 
@@ -478,16 +481,16 @@ void FileWindow::timerClick()
 {
     if (currBlock > lastBlock)
     {
-        //qDebug() << "copy in progress" << currBlock;
         lastBlock = currBlock;
     } else
     {
-        //qDebug() << "copy might be stuck";
+        timer->stop();
         if (QMessageBox::critical(this, "QtCBM", "Trouble writing "+d64imageFile+"\n\nAbort?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
         {
             stopCopy();
         } else {
             lastBlock = currBlock;
+            timer->start();
         }
     }
 }
@@ -495,13 +498,7 @@ void FileWindow::timerClick()
 void FileWindow::stopCopy()
 {
     timer->stop();
-    //qDebug() << "requested abort copy operation";
-    proc_d64copy->kill();
-    //ui->statusBar->removeWidget(btn_abort);
-    //ui->statusBar->removeWidget(progbar);
-    //delete btn_abort;
-    //delete progbar;
-    //ui->statusBar->showMessage(proc_d64copy->readAllStandardOutput());
+    proc_d64copy->kill(); // this will call cbmCopyFinished()
     ui->copyToCBM->setEnabled(true);
     QMessageBox::information(this, "Copy Aborted", "The copy operation was terminated", QMessageBox::Ok, QMessageBox::Ok);
 }
@@ -609,7 +606,6 @@ void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
 {
     QString output = proc_cbmFormat->readAllStandardOutput();
-    //qDebug() << output;
 
     ui->statusBar->removeWidget(progbar);
     delete progbar;
@@ -701,20 +697,22 @@ QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
                 }
             }
         }
-    } else
+/*    } else if (usec64font && !useInternalcbmctrl)
     {
         for (int i = 0; i < pS.length(); i++)
         {
             int chr = (unsigned char)pS.at(i);
             output.append(QChar(cbm_petscii2ascii_c(chr)));
-        }
+        } */
+    } else
+    {
+        return QString(pS);
     }
     return output;
 }
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
-    //qDebug() << "dir finished";
     // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
@@ -722,20 +720,14 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     // clear the file list
     ui->cbmFiles->clear();
 
-    //qDebug() << proc_cbmDir->readAllStandardOutput();
-
     QList<QByteArray> dirlist = proc_cbmDir->readAllStandardOutput().split('\n');
     for (int i = 0; i < dirlist.count(); i++)
     {
-        //qDebug() << dirlist.at(i);
         QRegExp rxLabel("(0|1)\\s*.\"(.*)\"\\s*(.*)");
         QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
         QRegExp rxFreeSpace("(\\d+)\\s\\S\\S\\S\\S\\S\\S\\s\\S\\S\\S\\S");
 
-        //QString regstring = QString::fromLocal8Bit(dirlist.at(i));
         QString regstring = stringToPETSCII(dirlist.at(i));
-
-        //qDebug() << regstring;
 
         if (rxDirEntry.indexIn(regstring) >= 0)
         {
@@ -743,7 +735,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             item->setText(0, stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false));
             item->setText(1, stringToPETSCII(formatFileSize(rxDirEntry.cap(1).toInt()*254)));
             item->setText(2, stringToPETSCII(rxDirEntry.cap(2)));
-            //qDebug() << rxDirEntry.cap(2);
             item->setText(3, rxDirEntry.cap(3).toUpper());
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
@@ -755,7 +746,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
             ui->diskLabel->setText(stringToPETSCII(rxLabel.cap(2).trimmed()));
             ui->diskId->setText(stringToPETSCII(rxLabel.cap(3).trimmed()));
         }
-        //qDebug() << QString(dirlist.at(i));
     }
     ui->cbmFiles->resizeColumnToContents(0);
     ui->cbmFiles->resizeColumnToContents(1);
@@ -776,7 +766,6 @@ void FileWindow::on_CBMDirectory_clicked()
 {
     if(confirmExecute(cbmctrl, QStringList() << "dir" << QString::number(deviceid)))
     {
-        qDebug() << "going to run the program";
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
         progbar->setMaximum(0);
@@ -785,7 +774,6 @@ void FileWindow::on_CBMDirectory_clicked()
         proc_cbmDir->start(cbmctrl, QStringList() << "dir" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
         if (!proc_cbmDir->waitForStarted())
         {
-            qDebug() << "failed to run";
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
@@ -872,6 +860,25 @@ void FileWindow::on_CBMValidate_clicked()
 
 void FileWindow::on_copyFromCBM_clicked()
 {
+    QList<QTreeWidgetItem *> list = ui->cbmFiles->selectedItems();
+
+    if (list.count() == 1)
+    {
+        if (!selectedLocalFolder.isEmpty())
+        {
+            QString cbmFileName = list.at(0)->text(2)+"."+list.at(0)->text(3);
+            if(confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName)))
+            {
+                qDebug() << "do the copy";
+                return;
+            }
+        } else
+        {
+            QMessageBox::warning(this, "QtCBM", "No local folder selected. Select where I should save the file.", QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
+    }
+
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
 
     if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
