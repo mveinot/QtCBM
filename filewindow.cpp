@@ -153,24 +153,25 @@ void FileWindow::loadSettings()
 
     // Load the C64 system font from resources
     fontDB = new QFontDatabase();
+    fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
+    fontDB->addApplicationFont(":/res/fonts/c64.ttf");
+    fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
+
     if (usec64font)
     {
         if (useInternalcbmctrl)
         {
-            fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
-            font8 = QFont("C64 Elite Mono", 7, -1, false);
-            font11 = QFont("C64 Elite Mono", 10, -1, false);
+            font8 = QFont("C64 Elite Mono", 7);
+            font11 = QFont("C64 Elite Mono", 10);
         } else
         {
-            fontDB->addApplicationFont(":/res/fonts/c64.ttf");
-            font8 = QFont("C64 Pro Mono", 7, -1, false);
-            font11 = QFont("C64 Pro Mono", 10, -1, false);
+            font8 = QFont("C64 Pro Mono", 7);
+            font11 = QFont("C64 Pro Mono", 10);
         }
     } else
     {
-        fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
-        font8 = QFont("Consolas", 14, -1, false);
-        font11 = QFont("Consolas", 14, -1, false);
+        font8 = QFont("Consolas", 14);
+        font11 = QFont("Consolas", 14);
     }
 
     ui->diskLabel->setFont(font11);
