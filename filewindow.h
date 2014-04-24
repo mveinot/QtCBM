@@ -25,6 +25,7 @@ public:
     bool confirmExecute(QString command, QStringList params);
     QString stringToPETSCII(QByteArray, bool);
     QString stringToPETSCII(QString);
+    void writeD64FromArgs(QString);
     ~FileWindow();  
 
 private slots:
@@ -126,6 +127,7 @@ private:
     QString morse;
     QString transfermode;
     QString d64imageFile;
+    QString fileFromArgs;
 
     // other variables
     bool showcmd;

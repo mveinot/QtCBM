@@ -128,6 +128,12 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->cbmFiles->setStyleSheet(c64TreeStyle);
 }
 
+void FileWindow::writeD64FromArgs(QString filename)
+{
+    fileFromArgs = filename;
+    on_copyToCBM_clicked();
+}
+
 void FileWindow::loadSettings()
 {
     QFont font11;
@@ -419,27 +425,43 @@ void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
 void FileWindow::on_copyToCBM_clicked()
 {
     QString fileToCopy;
+    //bool okayToCopy = true;
 
-    if (ui->localFiles->model() != NULL)
+    if (!fileFromArgs.isEmpty())
     {
-        QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
-        QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
-
-        if (index.count() < 1)
+        if (QMessageBox::question(this, "QtCBM", "Do you want to copy\n"+fileFromArgs+"\nTo the current disk now?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
         {
-            QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
-            return;
-        } else if (index.count() > 1)
+            fileToCopy = fileFromArgs;
+            //okayToCopy = true;
+        } else
         {
-            QMessageBox::warning(this,tr("Error"), tr("Can't image multiple files"), QMessageBox::Ok, QMessageBox::Ok);
+            fileFromArgs.clear();
             return;
-        } else {
-            fileToCopy = model->filePath(index.at(0));
+            //okayToCopy = false;
         }
     } else
     {
-        QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
-        return;
+        if (ui->localFiles->model() != NULL)
+        {
+            QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
+            QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
+
+            if (index.count() < 1)
+            {
+                QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
+                return;
+            } else if (index.count() > 1)
+            {
+                QMessageBox::warning(this,tr("Error"), tr("Can't image multiple files"), QMessageBox::Ok, QMessageBox::Ok);
+                return;
+            } else {
+                fileToCopy = model->filePath(index.at(0));
+            }
+        } else
+        {
+            QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
     }
 
     QFileInfo fileinfo(fileToCopy);
