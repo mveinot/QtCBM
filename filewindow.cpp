@@ -31,7 +31,7 @@ FileWindow::FileWindow(QWidget *parent) :
     ui(new Ui::FileWindow)
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
-    usec64font = NULL;
+    usec64font = false;
     selectedLocalFolder = "";
 
     ui->setupUi(this);
@@ -109,6 +109,12 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->localFolders->hideColumn(3);
     ui->localFolders->setAnimated(false);
 
+    filesModel = new QFileSystemModel();
+    filesModel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
+    filesModel->setRootPath(QDir::homePath());
+    ui->localFiles->setModel(filesModel);
+    ui->localFiles->setRootIndex(filesModel->index(QDir::homePath()));
+
     // size the CBM file list headers
     ui->cbmFiles->header()->resizeSection(0, 45);
     ui->cbmFiles->header()->resizeSection(1, 60);
@@ -173,7 +179,6 @@ void FileWindow::loadSettings()
     ui->cbmFiles->setFont(font8);
 
     ui->statusBar->showMessage("Settings read", 5000);
-    //QMessageBox::information(this, "settings", cbmctrl+cbmforng+d64copy, QMessageBox::Ok, QMessageBox::Ok);
 }
 
 FileWindow::~FileWindow()
@@ -381,14 +386,24 @@ void FileWindow::on_CBMStatus_clicked()
 
 void FileWindow::on_actionView_Drive_triggered()
 {
+    foldersModel->setRootPath(QDir::rootPath());
     ui->localFolders->setRootIndex(foldersModel->index(QDir::rootPath()));
+
+    filesModel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
+    filesModel->setRootPath(QDir::rootPath());
+    ui->localFiles->setRootIndex(filesModel->index(QDir::rootPath()));
     ui->actionView_Home_Folder->setChecked(false);
     ui->actionView_Drive->setChecked(true);
 }
 
 void FileWindow::on_actionView_Home_Folder_triggered()
 {
+    foldersModel->setRootPath(QDir::homePath());
     ui->localFolders->setRootIndex(foldersModel->index(QDir::homePath()));
+
+    filesModel->setFilter(QDir::NoDotAndDotDot | QDir::Files);
+    filesModel->setRootPath(QDir::homePath());
+    ui->localFiles->setRootIndex(filesModel->index(QDir::homePath()));
     ui->actionView_Home_Folder->setChecked(true);
     ui->actionView_Drive->setChecked(false);
 }
@@ -569,7 +584,7 @@ void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
     delete progbar;
 
     QString output = proc_cbmDetect->readAllStandardOutput().trimmed();
-    qDebug() << output;
+    //qDebug() << output;
 
     QRegExp rx("(\\d+):\\s*(.*)");
     if (rx.indexIn(output) >= 0)

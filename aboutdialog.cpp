@@ -7,7 +7,9 @@ aboutDialog::aboutDialog(QWidget *parent) :
     ui(new Ui::aboutDialog)
 {
     ui->setupUi(this);
-    ui->version->setText("Version: "+QString(VERSION));
+    ui->qtcbm->setFont(QFont("C64 Pro Mono", 65));
+    ui->version->setFont(QFont("C64 Pro Mono", 12));
+    ui->version->setText("Version: "+QString(__QTCBM_VERSION__));
 }
 
 aboutDialog::~aboutDialog()

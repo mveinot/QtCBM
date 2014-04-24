@@ -9,6 +9,7 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui(new Ui::settingsDialog)
 {
     ui->setupUi(this);
+
     settings = new QSettings("mvgrafx", "QtCBM");
     ui->input_cbmctrl->setText(settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString());
     ui->input_cbmforng->setText(settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString());
