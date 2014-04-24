@@ -73,6 +73,11 @@ Section "Lab Mentors"
 
   ; Set output path to the installation directory.
   SetOutPath $INSTDIR
+
+  !define NameStr "Write .D64 with QtCBM"
+  WriteRegStr HKCR ".d64" "" "DirMaster"
+  WriteRegStr HKCR "DirMaster\Shell\${NameStr}\Command" "" "$INSTDIR\QtCBM.exe $\"%1$\""
+  ;File "$INSTDIR\QtCBM.exe"
   
   ; Put file there
   File "C:\Users\vmark\Google Drive\QtCBM\QtCBM.exe"
@@ -106,14 +111,6 @@ Section "Lab Mentors"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
   
-  !define NameStr "Copy with QtCBM"
-
-  Section "AddMe"
-    SetOutPath "$INSTDIR"
-	WriteRegStr HKCR ".d64" "" "DirMaster"
-    WriteRegStr HKCR "DirMaster\Shell\${NameStr}\Command" "" "$INSTDIR\QtCBM.exe $\"%1$\""
-    File "QtCBM.exe"
-  SectionEnd
 
   CreateShortCut "$SMPROGRAMS\QtCBM.lnk" "$INSTDIR\QtCBM.exe"
 
