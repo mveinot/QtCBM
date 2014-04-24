@@ -102,13 +102,18 @@ Section "Lab Mentors"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "DisplayIcon" '"$INSTDIR\QtCBM.exe"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "URLInfoAbout" "http://www.mvgrafx.net"
-;  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "HelpLink" "http://help.labmentors.com"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\QtCBM" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
   
-  ; Set up new file association
-;  ${registerExtension} "$INSTDIR\eLabClient.exe" ".elab" "ELAB_Session"
+  !define NameStr "Copy with QtCBM"
+
+  Section "AddMe"
+    SetOutPath "$INSTDIR"
+	WriteRegStr HKCR ".d64" "" "DirMaster"
+    WriteRegStr HKCR "DirMaster\Shell\${NameStr}\Command" "" "$INSTDIR\QtCBM.exe $\"%1$\""
+    File "QtCBM.exe"
+  SectionEnd
 
   CreateShortCut "$SMPROGRAMS\QtCBM.lnk" "$INSTDIR\QtCBM.exe"
 
