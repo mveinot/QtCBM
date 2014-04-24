@@ -425,19 +425,17 @@ void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
 void FileWindow::on_copyToCBM_clicked()
 {
     QString fileToCopy;
-    //bool okayToCopy = true;
 
     if (!fileFromArgs.isEmpty())
     {
         if (QMessageBox::question(this, "QtCBM", "Do you want to copy\n"+fileFromArgs+"\nTo the current disk now?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
         {
             fileToCopy = fileFromArgs;
-            //okayToCopy = true;
+            fileFromArgs.clear();
         } else
         {
             fileFromArgs.clear();
             return;
-            //okayToCopy = false;
         }
     } else
     {
