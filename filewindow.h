@@ -26,6 +26,8 @@ public:
     QString stringToPETSCII(QByteArray, bool);
     QString stringToPETSCII(QString);
     void writeD64FromArgs(QString);
+    void disableUIElements();
+    void enableUIElements();
     ~FileWindow();  
 
 private slots:

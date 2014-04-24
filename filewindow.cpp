@@ -10,6 +10,7 @@
 #include <QProgressBar>
 #include <QRegExp>
 #include <QString>
+#include <QThread>
 #include <QTreeWidgetItem>
 #include <QUrl>
 #include <string>
@@ -126,6 +127,35 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->diskId->setStyleSheet(c64LineStyle);
     ui->freeSpace->setStyleSheet(c64LineStyle);
     ui->cbmFiles->setStyleSheet(c64TreeStyle);
+}
+
+void FileWindow::disableUIElements()
+{
+    ui->copyToCBM->setEnabled(false);
+    ui->copyFromCBM->setEnabled(false);
+    ui->CBMDirectory->setEnabled(false);
+    ui->CBMFormat->setEnabled(false);
+    ui->CBMInitialize->setEnabled(false);
+    ui->CBMValidate->setEnabled(false);
+    ui->CBMRename->setEnabled(false);
+    ui->CBMScratch->setEnabled(false);
+    ui->CBMStatus->setEnabled(false);
+    ui->menuTools->setEnabled(false);
+}
+
+void FileWindow::enableUIElements()
+{
+    QThread::sleep(2);
+    ui->copyToCBM->setEnabled(true);
+    ui->copyFromCBM->setEnabled(true);
+    ui->CBMDirectory->setEnabled(true);
+    ui->CBMFormat->setEnabled(true);
+    ui->CBMInitialize->setEnabled(true);
+    ui->CBMValidate->setEnabled(true);
+    ui->CBMRename->setEnabled(true);
+    ui->CBMScratch->setEnabled(true);
+    ui->CBMStatus->setEnabled(true);
+    ui->menuTools->setEnabled(true);
 }
 
 void FileWindow::writeD64FromArgs(QString filename)
@@ -388,6 +418,7 @@ void FileWindow::on_CBMStatus_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -419,6 +450,7 @@ void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
     ui->statusBar->showMessage("Drive status: "+proc_cbmStatus->readAllStandardOutput());
 }
 
@@ -498,6 +530,7 @@ void FileWindow::on_copyToCBM_clicked()
                 delete btn_abort;
             }
             timer->start();
+            disableUIElements();
             currBlock = 0;
             lastBlock = 0;
         }
@@ -542,6 +575,7 @@ void FileWindow::stopCopy()
 void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
 {
     timer->stop();
+    enableUIElements();
     qDebug() << "Process terminated with exit code: "+QString::number(x)+" and exit status: "+QString::number(status);
     (void)x;
     (void)status;
@@ -594,6 +628,7 @@ void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
     // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     ui->statusBar->showMessage("The CBM bus was reset");
 }
@@ -603,6 +638,7 @@ void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
     // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     QString output = proc_cbmDetect->readAllStandardOutput().trimmed();
     //qDebug() << output;
@@ -621,6 +657,7 @@ void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     ui->statusBar->showMessage("Initialization complete");
 }
@@ -629,12 +666,14 @@ void FileWindow::morseFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 }
 
 void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     ui->statusBar->showMessage("Validation complete");
 }
@@ -645,6 +684,7 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
 
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     detailsInfoDialog *dlg = new detailsInfoDialog(this);
     dlg->setText("The format command produced the following output:");
@@ -752,6 +792,7 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     // remove the progress bar
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     // clear the file list
     ui->cbmFiles->clear();
@@ -814,6 +855,7 @@ void FileWindow::on_CBMDirectory_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -848,6 +890,7 @@ void FileWindow::on_CBMFormat_clicked()
                 ui->statusBar->removeWidget(progbar);
                 delete progbar;
             }
+            disableUIElements();
         }
         } else
         {
@@ -872,6 +915,7 @@ void FileWindow::on_CBMInitialize_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -891,6 +935,7 @@ void FileWindow::on_CBMValidate_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -949,6 +994,7 @@ void FileWindow::on_copyFromCBM_clicked()
             delete btn_abort;
         }
         timer->start();
+        disableUIElements();
         currBlock = 0;
         lastBlock = 0;
     }
@@ -958,6 +1004,7 @@ void FileWindow::cbmRenameFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     ui->statusBar->showMessage("File renamed");
     on_CBMDirectory_clicked();
@@ -967,6 +1014,7 @@ void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
 {
     ui->statusBar->removeWidget(progbar);
     delete progbar;
+    enableUIElements();
 
     ui->statusBar->showMessage("File erased");
     on_CBMDirectory_clicked();
@@ -999,6 +1047,7 @@ void FileWindow::on_CBMScratch_clicked()
                 ui->statusBar->removeWidget(progbar);
                 delete progbar;
             }
+            disableUIElements();
         }
     }
 }
@@ -1029,6 +1078,7 @@ void FileWindow::on_CBMRename_clicked()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -1048,6 +1098,7 @@ void FileWindow::on_actionReset_Bus_triggered()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -1067,6 +1118,7 @@ void FileWindow::on_actionDetect_Drive_triggered()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
 
@@ -1086,5 +1138,6 @@ void FileWindow::on_actionMorse_Code_triggered()
             ui->statusBar->removeWidget(progbar);
             delete progbar;
         }
+        disableUIElements();
     }
 }
