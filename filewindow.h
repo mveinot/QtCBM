@@ -60,6 +60,7 @@ private slots:
     void cbmRenameFinished(int ,QProcess::ExitStatus);
     void cbmDetectFinished(int, QProcess::ExitStatus);
     void morseFinished(int, QProcess::ExitStatus);
+    void cbmFileCopyFinished(int, QProcess::ExitStatus);
     void stopCopy();
     void timerClick();
 
@@ -120,6 +121,7 @@ private:
     QProcess *proc_cbmRename;
     QProcess *proc_cbmDetect;
     QProcess *proc_morse;
+    QProcess *proc_cbmcopy;
 
     // strings
     QString selectedLocalFolder;
@@ -137,7 +139,7 @@ private:
     bool showcmd;
     bool autorefresh;
     bool usec64font;
-    bool useInternalcbmctrl;
+    bool cbmctrlhasraw;
     int deviceid;
     int lastBlock;
     int currBlock;

@@ -20,9 +20,9 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->autoRefresh->setChecked(settings->value("autorefresh", true).toBool());
     ui->showCommands->setChecked(settings->value("showcmd", false).toBool());
     ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
-    ui->useInternalCBMctrl->setChecked(settings->value("internalcbmctrl", true).toBool());
+    //ui->useInternalCBMctrl->setChecked(settings->value("internalcbmctrl", true).toBool());
     QString transfermode = settings->value("transfermode", "auto").toString();
-    on_useC64font_clicked(ui->useC64font->isChecked());
+    //on_useC64font_clicked(ui->useC64font->isChecked());
 
     if (transfermode == "original")
         ui->trOriginal->setChecked(true);
@@ -78,7 +78,7 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("showcmd", ui->showCommands->isChecked());
     settings->setValue("autorefresh", ui->autoRefresh->isChecked());
     settings->setValue("usec64font", ui->useC64font->isChecked());
-    settings->setValue("internalcbmctrl", ui->useInternalCBMctrl->isChecked());
+    //settings->setValue("internalcbmctrl", ui->useInternalCBMctrl->isChecked());
     settings->sync();
 
     emit settingsChanged();
@@ -99,8 +99,7 @@ QString settingsDialog::getTransferMode()
     return "auto";
 }
 
-
-
+/*
 void settingsDialog::on_useC64font_clicked(bool checked)
 {
     if (!checked)
@@ -112,3 +111,4 @@ void settingsDialog::on_useC64font_clicked(bool checked)
         ui->useInternalCBMctrl->setEnabled(true);
     }
 }
+*/

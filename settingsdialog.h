@@ -35,7 +35,7 @@ private slots:
 
     void on_browse_morse_clicked();
 
-    void on_useC64font_clicked(bool checked);
+    //void on_useC64font_clicked(bool checked);
 
 private:
     Ui::settingsDialog *ui;

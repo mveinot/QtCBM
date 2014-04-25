@@ -351,16 +351,6 @@
               </widget>
              </item>
              <item>
-              <widget class="QCheckBox" name="useInternalCBMctrl">
-               <property name="toolTip">
-                <string>The customized internal cbmctrl.exe allows QtCBM to display PETSCII characters in the directory listing when the classic font is selected</string>
-               </property>
-               <property name="text">
-                <string>Use customized internal cbmctrl.exe</string>
-               </property>
-              </widget>
-             </item>
-             <item>
               <spacer name="verticalSpacer">
                <property name="orientation">
                 <enum>Qt::Vertical</enum>

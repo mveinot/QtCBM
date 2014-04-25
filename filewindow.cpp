@@ -33,6 +33,7 @@ FileWindow::FileWindow(QWidget *parent) :
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
     usec64font = false;
+    cbmctrlhasraw = false;
     selectedLocalFolder = "";
 
     ui->setupUi(this);
@@ -74,6 +75,9 @@ FileWindow::FileWindow(QWidget *parent) :
 
     proc_morse = new QProcess(this);
     connect(proc_morse, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(morseFinished(int,QProcess::ExitStatus)));
+
+    proc_cbmcopy = new QProcess(this);
+    connect(proc_cbmcopy, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmFileCopyFinished(int,QProcess::ExitStatus)));
 
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
@@ -169,7 +173,8 @@ void FileWindow::loadSettings()
     QFont font11;
     QFont font8;
     // read in settings
-    useInternalcbmctrl = settings->value("internalcbmctrl", true).toBool();
+    //useInternalcbmctrl = settings->value("internalcbmctrl", true).toBool();
+    /*
     if (useInternalcbmctrl)
     {
         cbmctrl = QCoreApplication::applicationDirPath()+"/cbmctrl.exe";
@@ -177,6 +182,8 @@ void FileWindow::loadSettings()
     {
         cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
     }
+    */
+    cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
     cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
     d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
     cbmcopy = settings->value("tools/cbmcopy", QStandardPaths::findExecutable("cbmcopy.exe")).toString();
@@ -193,9 +200,43 @@ void FileWindow::loadSettings()
     fontDB->addApplicationFont(":/res/fonts/c64.ttf");
     fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
 
+    QFileInfo file(cbmctrl);
+    if (file.isExecutable())
+    {
+        QProcess *proc = new QProcess(this);
+
+        proc->start(cbmctrl, QStringList() << "--version", QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc->waitForStarted())
+        {
+            cbmctrlhasraw = false;
+        } else
+        {
+            QByteArray data;
+
+            while(proc->waitForReadyRead())
+                data.append(proc->readAllStandardOutput());
+
+            QString s_ver = QString(data).trimmed();
+
+            //qDebug() << s_ver;
+
+            QRegExp rx("cbmctrl\\s+version\\s+(\\d+)\\.(\\d+)\\.(\\d+)");
+            if (rx.indexIn(s_ver) >= 0)
+            {
+                //qDebug() << "string matched";
+                int major = rx.cap(1).toInt();
+                int minor = rx.cap(2).toInt();
+                int revis = rx.cap(3).toInt();
+
+                cbmctrlhasraw = (major > 0 || minor > 4 || revis >= 99);
+                //qDebug() << cbmctrlhasraw;
+            }
+        }
+    }
+
     if (usec64font)
     {
-        if (useInternalcbmctrl)
+        if (cbmctrlhasraw)
         {
             font8 = QFont("C64 Elite Mono", 7);
             font11 = QFont("C64 Elite Mono", 10);
@@ -398,7 +439,6 @@ void FileWindow::on_actionPreferences_triggered()
     settingsDialog *dlg = new settingsDialog();
 
     connect(dlg, SIGNAL(settingsChanged()), this, SLOT(loadSettings()));
-
     dlg->show();
 }
 
@@ -417,8 +457,10 @@ void FileWindow::on_CBMStatus_clicked()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmStatus->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -452,6 +494,14 @@ void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
     delete progbar;
     enableUIElements();
     ui->statusBar->showMessage("Drive status: "+proc_cbmStatus->readAllStandardOutput());
+}
+
+void FileWindow::cbmFileCopyFinished(int, QProcess::ExitStatus)
+{
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+    enableUIElements();
+    ui->statusBar->showMessage("Copy completed");
 }
 
 void FileWindow::on_copyToCBM_clicked()
@@ -528,17 +578,40 @@ void FileWindow::on_copyToCBM_clicked()
                 ui->statusBar->removeWidget(btn_abort);
                 delete progbar;
                 delete btn_abort;
+            } else
+            {
+                timer->start();
+                disableUIElements();
+                currBlock = 0;
+                lastBlock = 0;
             }
-            timer->start();
-            disableUIElements();
-            currBlock = 0;
-            lastBlock = 0;
         }
-    } else if (ext == "PRG" || ext == "SEQ" || ext == "P00" || ext == "T64" || ext == "BIN")
+    } else if (ext == "PRG")
     {
         if (confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()+"."+fileinfo.completeSuffix()))
         {
-            qDebug() << "copy file";
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(0);
+            progbar->setTextVisible(true);
+            ui->statusBar->addPermanentWidget(progbar);
+            ui->copyToCBM->setEnabled(false);
+            QFileInfo file(fileToCopy);
+            ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+            d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+            proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()+"."+fileinfo.completeSuffix(), QIODevice::ReadWrite | QIODevice::Text);
+            if (!proc_cbmcopy->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+cbmcopy+"\n\nExit status: "+QString::number(proc_cbmcopy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                ui->statusBar->removeWidget(btn_abort);
+                delete progbar;
+                delete btn_abort;
+            } else
+            {
+                disableUIElements();
+            }
         }
     } else
     {
@@ -722,7 +795,7 @@ char cbm_petscii2ascii_c(char Character)
 QString FileWindow::stringToPETSCII(QString pS)
 {
     QString output = "";
-    if (usec64font && useInternalcbmctrl)
+    if (usec64font && cbmctrlhasraw)
     {
         for (int i = 0; i < pS.length(); i++)
         {
@@ -743,7 +816,7 @@ QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
     //QByteArray input = pS.toLocal8Bit();
 
     QString output = "";
-    if (usec64font && useInternalcbmctrl)
+    if (usec64font && cbmctrlhasraw)
     {
         for (int i = 0; i < pS.length(); i++)
         {
@@ -849,21 +922,30 @@ bool FileWindow::confirmExecute(QString command, QStringList params)
 
 void FileWindow::on_CBMDirectory_clicked()
 {
-    if(confirmExecute(cbmctrl, QStringList() << "dir" << QString::number(deviceid)))
+    QStringList params;
+
+    if (cbmctrlhasraw && usec64font)
+        params << "--raw";
+
+    params << "dir" << QString::number(deviceid);
+
+    if(confirmExecute(cbmctrl, QStringList() << params))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
         progbar->setMaximum(0);
         ui->statusBar->addPermanentWidget(progbar);
 
-        proc_cbmDir->start(cbmctrl, QStringList() << "dir" << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+        proc_cbmDir->start(cbmctrl, QStringList() << params, QIODevice::ReadWrite | QIODevice::Text);
         if (!proc_cbmDir->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -897,8 +979,10 @@ void FileWindow::on_CBMFormat_clicked()
                 QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
                 ui->statusBar->removeWidget(progbar);
                 delete progbar;
+            } else
+            {
+                disableUIElements();
             }
-            disableUIElements();
         }
         } else
         {
@@ -922,8 +1006,10 @@ void FileWindow::on_CBMInitialize_clicked()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmInit->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -942,8 +1028,10 @@ void FileWindow::on_CBMValidate_clicked()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmValidate->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -1000,11 +1088,13 @@ void FileWindow::on_copyFromCBM_clicked()
             ui->statusBar->removeWidget(btn_abort);
             delete progbar;
             delete btn_abort;
+        } else
+        {
+            timer->start();
+            disableUIElements();
+            currBlock = 0;
+            lastBlock = 0;
         }
-        timer->start();
-        disableUIElements();
-        currBlock = 0;
-        lastBlock = 0;
     }
 }
 
@@ -1054,8 +1144,10 @@ void FileWindow::on_CBMScratch_clicked()
                 QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmScratch->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
                 ui->statusBar->removeWidget(progbar);
                 delete progbar;
+            } else
+            {
+                disableUIElements();
             }
-            disableUIElements();
         }
     }
 }
@@ -1085,8 +1177,10 @@ void FileWindow::on_CBMRename_clicked()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmRename->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -1105,8 +1199,10 @@ void FileWindow::on_actionReset_Bus_triggered()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmReset->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -1125,8 +1221,10 @@ void FileWindow::on_actionDetect_Drive_triggered()
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDetect->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
@@ -1145,8 +1243,10 @@ void FileWindow::on_actionMorse_Code_triggered()
             QMessageBox::warning(this,"Error", "Failed to execute "+morse+"\n\nExit status: "+QString::number(proc_morse->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
             ui->statusBar->removeWidget(progbar);
             delete progbar;
+        } else
+        {
+            disableUIElements();
         }
-        disableUIElements();
     }
 }
 
