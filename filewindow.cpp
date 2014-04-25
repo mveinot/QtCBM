@@ -1107,7 +1107,8 @@ void FileWindow::cbmRenameFinished(int, QProcess::ExitStatus)
     enableUIElements();
 
     ui->statusBar->showMessage("File renamed");
-    on_CBMDirectory_clicked();
+    if (autorefresh)
+        on_CBMDirectory_clicked();
 }
 
 void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
@@ -1117,7 +1118,8 @@ void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
     enableUIElements();
 
     ui->statusBar->showMessage("File erased");
-    on_CBMDirectory_clicked();
+    if (autorefresh)
+        on_CBMDirectory_clicked();
 }
 
 void FileWindow::on_CBMScratch_clicked()
