@@ -1141,3 +1141,8 @@ void FileWindow::on_actionMorse_Code_triggered()
         disableUIElements();
     }
 }
+
+void FileWindow::on_action_Quit_triggered()
+{
+    this->close();
+}

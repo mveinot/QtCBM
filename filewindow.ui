@@ -820,6 +820,8 @@
     </property>
     <addaction name="actionView_Home_Folder"/>
     <addaction name="actionView_Drive"/>
+    <addaction name="separator"/>
+    <addaction name="action_Quit"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -892,6 +894,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>About...</string>
+   </property>
+  </action>
+  <action name="action_Quit">
+   <property name="text">
+    <string>&amp;Quit</string>
    </property>
   </action>
  </widget>

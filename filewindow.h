@@ -93,6 +93,8 @@ private slots:
 
     void on_actionMorse_Code_triggered();
 
+    void on_action_Quit_triggered();
+
 private:
 
     // Qt objects
