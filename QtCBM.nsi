@@ -89,6 +89,7 @@ Section "Lab Mentors"
   File "C:\Users\vmark\Google Drive\QtCBM\libwinpthread-1.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\Qt5Core.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\Qt5Gui.dll"
+  File "C:\Users\vmark\Google Drive\QtCBM\Qt5Network.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\Qt5Widgets.dll"
 
   SetOutPath $INSTDIR\platforms
@@ -138,6 +139,7 @@ Section "Uninstall"
   Delete $INSTDIR\libwinpthread-1.dll
   Delete $INSTDIR\Qt5Core.dll
   Delete $INSTDIR\Qt5Gui.dll
+  Delete $INSTDIR\Qt5Network.dll
   Delete $INSTDIR\Qt5Widgets.dll
   Delete $INSTDIR\platforms\qminimal.dll
   Delete $INSTDIR\platforms\qwindows.dll
