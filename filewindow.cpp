@@ -89,9 +89,9 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->localFolders->addAction(actMakeDir);
     ui->localFolders->setContextMenuPolicy(Qt::ActionsContextMenu);
 
-    actRenameFile = new QAction(tr("&Rename..."), this);
-    actDeleteFile = new QAction(tr("&Delete..."),this);
-    actViewFile = new QAction(tr("&Run/View"),this);
+    actRenameFile = new QAction(tr("Rename..."), ui->localFiles);
+    actDeleteFile = new QAction(tr("Delete..."), ui->localFiles);
+    actViewFile = new QAction(tr("Run/View"), ui->localFiles);
 
     connect(actRenameFile, SIGNAL(triggered()), this, SLOT(act_renameFile()));
     connect(actDeleteFile, SIGNAL(triggered()), this, SLOT(act_deleteFile()));
