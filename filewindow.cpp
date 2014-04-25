@@ -831,6 +831,14 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 
 bool FileWindow::confirmExecute(QString command, QStringList params)
 {
+    QFileInfo file(command);
+
+    if (!file.isExecutable())
+    {
+        QMessageBox::warning(this, "QtCBM", file.baseName()+"."+file.completeSuffix()+" is not an executable file.", QMessageBox::Ok, QMessageBox::Ok);
+        return false;
+    }
+
     if (showcmd)
     {
         QFileInfo file = QFileInfo(command);
