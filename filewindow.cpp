@@ -590,7 +590,7 @@ void FileWindow::on_copyToCBM_clicked()
         }
     } else if (ext == "PRG")
     {
-        if (confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()+"."+fileinfo.completeSuffix()))
+        if (confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()))
         {
             progbar = new QProgressBar(this);
             progbar->setMinimum(0);
