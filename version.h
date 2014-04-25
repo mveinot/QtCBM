@@ -1,1 +1,1 @@
-#define __QTCBM_VERSION__ "0.9.3"
+#define __QTCBM_VERSION__ "0.9.5"

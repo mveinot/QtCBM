@@ -502,6 +502,8 @@ void FileWindow::cbmFileCopyFinished(int, QProcess::ExitStatus)
     delete progbar;
     enableUIElements();
     ui->statusBar->showMessage("Copy completed");
+    if (autorefresh)
+        on_CBMDirectory_clicked();
 }
 
 void FileWindow::on_copyToCBM_clicked()
@@ -658,7 +660,7 @@ void FileWindow::cbmCopyFinished(int x, QProcess::ExitStatus status)
     delete btn_abort;
     delete progbar;
     ui->copyToCBM->setEnabled(true);
-    if (status == QProcess::NormalExit)
+    if (status == QProcess::NormalExit && autorefresh)
     {
         on_CBMDirectory_clicked();
     } else if (status == QProcess::CrashExit)
