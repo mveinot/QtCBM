@@ -84,7 +84,7 @@ FileWindow::FileWindow(QWidget *parent) :
     loadSettings();
 
     // Create our context menu items
-    actMakeDir = new QAction(tr("&New Folder..."),this);
+    actMakeDir = new QAction(tr("New Folder..."), ui->localFolders);
     connect(actMakeDir, SIGNAL(triggered()), this, SLOT(act_newFolder()));
     ui->localFolders->addAction(actMakeDir);
     ui->localFolders->setContextMenuPolicy(Qt::ActionsContextMenu);
