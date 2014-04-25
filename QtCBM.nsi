@@ -81,8 +81,6 @@ Section "Lab Mentors"
   
   ; Put file there
   File "C:\Users\vmark\Google Drive\QtCBM\QtCBM.exe"
-  File "C:\Users\vmark\Google Drive\QtCBM\cbmctrl.exe"
-  File "C:\Users\vmark\Google Drive\QtCBM\opencbm.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\icudt51.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\icuin51.dll"
   File "C:\Users\vmark\Google Drive\QtCBM\icuuc51.dll"
@@ -132,8 +130,6 @@ Section "Uninstall"
 
   ; Remove files and uninstaller
   Delete $INSTDIR\QtCBM.exe
-  Delete $INSTDIR\cbmctrl.exe
-  Delete $INSTDIR\opencbm.dll
   Delete $INSTDIR\icudt51.dll
   Delete $INSTDIR\icuin51.dll
   Delete $INSTDIR\icuuc51.dll
