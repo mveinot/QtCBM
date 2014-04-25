@@ -602,7 +602,7 @@ void FileWindow::on_copyToCBM_clicked()
             ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
             d64imageFile = file.baseName()+"."+file.completeSuffix();
 
-            proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName()+"."+fileinfo.completeSuffix(), QIODevice::ReadWrite | QIODevice::Text);
+            proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << QDir::toNativeSeparators(fileToCopy) << "--output" << fileinfo.baseName(), QIODevice::ReadWrite | QIODevice::Text);
             if (!proc_cbmcopy->waitForStarted())
             {
                 QMessageBox::warning(this,"Error", "Failed to execute "+cbmcopy+"\n\nExit status: "+QString::number(proc_cbmcopy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
