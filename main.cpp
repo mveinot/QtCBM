@@ -1,10 +1,18 @@
 #include "filewindow.h"
 #include <QApplication>
-#include <QtDebug>
+#include <QtSingleApplication>
+#include <QMessageBox>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
+    QtSingleApplication a(argc, argv);
+
+    if (a.isRunning())
+    {
+        QMessageBox::warning(NULL, "QtCBM", "Another instance of this application is already running. Press OK to exit.", QMessageBox::Ok, QMessageBox::Ok);
+        return 1;
+    }
+
     FileWindow w;
     w.show();
     if (argc > 1)
