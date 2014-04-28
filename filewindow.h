@@ -28,6 +28,7 @@ public:
     void writeD64FromArgs(QString);
     void disableUIElements();
     void enableUIElements();
+    QString getSelectedCBMFile(QString);
     ~FileWindow();  
 
 private slots:

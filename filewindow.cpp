@@ -968,24 +968,24 @@ void FileWindow::on_CBMFormat_clicked()
         QRegExp rx("[\\s\\S]+,\\d+");
         if (rx.indexIn(diskLabel) >= 0)
         {
-        if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
-        {
-            progbar = new QProgressBar(this);
-            progbar->setMinimum(0);
-            progbar->setMaximum(0);
-            ui->statusBar->addPermanentWidget(progbar);
+            if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
+            {
+                progbar = new QProgressBar(this);
+                progbar->setMinimum(0);
+                progbar->setMaximum(0);
+                ui->statusBar->addPermanentWidget(progbar);
 
-            proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
-            if (!proc_cbmFormat->waitForStarted())
-            {
-                QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
-                ui->statusBar->removeWidget(progbar);
-                delete progbar;
-            } else
-            {
-                disableUIElements();
+                proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
+                if (!proc_cbmFormat->waitForStarted())
+                {
+                    QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+                    ui->statusBar->removeWidget(progbar);
+                    delete progbar;
+                } else
+                {
+                    disableUIElements();
+                }
             }
-        }
         } else
         {
             QMessageBox::warning(this, "QtCBM", "Your input wasn't of the form \"Label,ID\". Unable to format with this input.");
@@ -1048,54 +1048,75 @@ void FileWindow::on_copyFromCBM_clicked()
             QString cbmFileName = list.at(0)->text(2)+"."+list.at(0)->text(3);
             if(confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName)))
             {
-                qDebug() << "do the copy";
-                return;
+                progbar = new QProgressBar(this);
+                progbar->setMinimum(0);
+                progbar->setMaximum(0);
+                progbar->setTextVisible(true);
+                ui->statusBar->addPermanentWidget(progbar);
+                ui->copyFromCBM->setEnabled(false);
+                //QFileInfo file(fileToCopy);
+                ui->statusBar->showMessage("Reading: "+cbmFileName+"...");
+                //d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+                proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName), QIODevice::ReadWrite | QIODevice::Text);
+                if (!proc_cbmcopy->waitForStarted())
+                {
+                    QMessageBox::warning(this,"Error", "Failed to execute "+cbmcopy+"\n\nExit status: "+QString::number(proc_cbmcopy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+                    ui->statusBar->removeWidget(progbar);
+                    ui->statusBar->removeWidget(btn_abort);
+                    delete progbar;
+                    delete btn_abort;
+                } else
+                {
+                    disableUIElements();
+                }
             }
         } else
         {
             QMessageBox::warning(this, "QtCBM", "No local folder selected. Select where I should save the file.", QMessageBox::Ok, QMessageBox::Ok);
             return;
         }
-    }
-
-    QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
-
-    if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
+    } else
     {
-        progbar = new QProgressBar(this);
-        progbar->setMinimum(0);
-        progbar->setMaximum(100);
-        progbar->setTextVisible(true);
-        btn_abort = new QPushButton(this);
-        connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
-        btn_abort->setText("X");
-        btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
-        btn_abort->setFixedHeight(18);
-        btn_abort->setFixedWidth(18);
-        ui->statusBar->addPermanentWidget(progbar);
-        ui->statusBar->addPermanentWidget(btn_abort);
-        timer = new QTimer(this);
-        timer->setInterval(10000);
-        connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
-        ui->copyToCBM->setEnabled(false);
-        QFileInfo file(fileName);
-        ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
-        d64imageFile = file.baseName()+"."+file.completeSuffix();
+        QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
 
-        proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
-        if (!proc_d64copy->waitForStarted())
+        if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
         {
-            QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
-            ui->statusBar->removeWidget(progbar);
-            ui->statusBar->removeWidget(btn_abort);
-            delete progbar;
-            delete btn_abort;
-        } else
-        {
-            timer->start();
-            disableUIElements();
-            currBlock = 0;
-            lastBlock = 0;
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(100);
+            progbar->setTextVisible(true);
+            btn_abort = new QPushButton(this);
+            connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
+            btn_abort->setText("X");
+            btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
+            btn_abort->setFixedHeight(18);
+            btn_abort->setFixedWidth(18);
+            ui->statusBar->addPermanentWidget(progbar);
+            ui->statusBar->addPermanentWidget(btn_abort);
+            timer = new QTimer(this);
+            timer->setInterval(10000);
+            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+            ui->copyToCBM->setEnabled(false);
+            QFileInfo file(fileName);
+            ui->statusBar->showMessage("Writing: "+file.baseName()+"."+file.completeSuffix()+"...");
+            d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+            proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName), QIODevice::ReadWrite | QIODevice::Text);
+            if (!proc_d64copy->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                ui->statusBar->removeWidget(btn_abort);
+                delete progbar;
+                delete btn_abort;
+            } else
+            {
+                timer->start();
+                disableUIElements();
+                currBlock = 0;
+                lastBlock = 0;
+            }
         }
     }
 }
@@ -1122,15 +1143,22 @@ void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
         on_CBMDirectory_clicked();
 }
 
-void FileWindow::on_CBMScratch_clicked()
+QString FileWindow::getSelectedCBMFile(QString message)
 {
     QList<QTreeWidgetItem *> items = ui->cbmFiles->selectedItems();
     if (items.count() != 1)
     {
-        QMessageBox::warning(this, "QtCBM", "Please select one item to delete.", QMessageBox::Ok, QMessageBox::Ok);
-        return;
+        QMessageBox::warning(this, "QtCBM", message, QMessageBox::Ok, QMessageBox::Ok);
+        return "";
     }
-    QString cbmFilename = items.at(0)->data(2,0).toString();
+    return items.at(0)->data(2,0).toString();
+}
+
+void FileWindow::on_CBMScratch_clicked()
+{
+    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.");
+    if (cbmFilename.isEmpty())
+        return;
 
     if (QMessageBox::question(this, "QtCBM", "Are you sure you want to delete the file \""+cbmFilename+"\" from the current disk?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
@@ -1159,16 +1187,13 @@ void FileWindow::on_CBMScratch_clicked()
 void FileWindow::on_CBMRename_clicked()
 {
     bool ok = false;
-    QList<QTreeWidgetItem *> items = ui->cbmFiles->selectedItems();
-    if (items.count() != 1)
-    {
-        QMessageBox::warning(this, "QtCBM", "Please select a file to rename.", QMessageBox::Ok, QMessageBox::Ok);
+
+    QString cbmFilename = getSelectedCBMFile("Please select a file to rename.");
+    if (cbmFilename.isEmpty())
         return;
-    }
-    QString cbmFilename = items.at(0)->data(2,0).toString();
 
     QString newFilename = QInputDialog::getText(this, "QtCBM", "New filename:", QLineEdit::Normal, "", &ok);
-    if ( ok && confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename))
+    if (ok && confirmExecute(cbmctrl, QStringList() << "command" << QString::number(deviceid) << "R0:"+cbmFilename+"="+newFilename))
     {
         progbar = new QProgressBar(this);
         progbar->setMinimum(0);
