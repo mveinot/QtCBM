@@ -22,20 +22,11 @@ signals:
 
 private slots:
     void on_browse_cbmctrl_clicked();
-
-    //void on_browse_cbmformat_clicked();
-
     void on_browse_cbmforng_clicked();
-
     void on_browse_d64copy_clicked();
-
     void on_buttonBox_accepted();
-
     void on_browse_cbmcopy_clicked();
-
     void on_browse_morse_clicked();
-
-    //void on_useC64font_clicked(bool checked);
 
 private:
     Ui::settingsDialog *ui;

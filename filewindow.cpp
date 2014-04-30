@@ -133,6 +133,22 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->cbmFiles->setStyleSheet(c64TreeStyle);
 }
 
+FileWindow::~FileWindow()
+{
+    delete ui;
+}
+
+void FileWindow::on_action_Quit_triggered()
+{
+    this->close();
+}
+
+void FileWindow::on_actionAbout_triggered()
+{
+    aboutDialog *dlg = new aboutDialog(this);
+    dlg->show();
+}
+
 void FileWindow::disableUIElements()
 {
     ui->copyToCBM->setEnabled(false);
@@ -162,6 +178,33 @@ void FileWindow::enableUIElements()
     ui->menuTools->setEnabled(true);
 }
 
+void FileWindow::resetUI()
+{
+    // remove the progress bar
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+    enableUIElements();
+}
+
+
+bool FileWindow::confirmExecute(QString command, QStringList params)
+{
+    QFileInfo file(command);
+
+    if (!file.isExecutable())
+    {
+        QMessageBox::warning(this, "QtCBM", file.baseName()+"."+file.completeSuffix()+" is not an executable file.", QMessageBox::Ok, QMessageBox::Ok);
+        return false;
+    }
+
+    if (showcmd)
+    {
+        QFileInfo file = QFileInfo(command);
+        return (QMessageBox::information(this, "QtCBM", "About to execute:\n\n"+file.baseName()+"."+file.completeSuffix()+" "+params.join(' ')+"\n\nContinue?", QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes);
+    }
+    return true;
+}
+
 void FileWindow::writeD64FromArgs(QString filename)
 {
     fileFromArgs = filename;
@@ -172,17 +215,8 @@ void FileWindow::loadSettings()
 {
     QFont font11;
     QFont font8;
+
     // read in settings
-    //useInternalcbmctrl = settings->value("internalcbmctrl", true).toBool();
-    /*
-    if (useInternalcbmctrl)
-    {
-        cbmctrl = QCoreApplication::applicationDirPath()+"/cbmctrl.exe";
-    } else
-    {
-        cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
-    }
-    */
     cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
     cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
     d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
@@ -218,18 +252,14 @@ void FileWindow::loadSettings()
 
             QString s_ver = QString(data).trimmed();
 
-            //qDebug() << s_ver;
-
             QRegExp rx("cbmctrl\\s+version\\s+(\\d+)\\.(\\d+)\\.(\\d+)");
             if (rx.indexIn(s_ver) >= 0)
             {
-                //qDebug() << "string matched";
                 int major = rx.cap(1).toInt();
                 int minor = rx.cap(2).toInt();
                 int revis = rx.cap(3).toInt();
 
                 cbmctrlhasraw = (major > 0 || minor > 4 || revis >= 99);
-                //qDebug() << cbmctrlhasraw;
             }
         }
     }
@@ -257,11 +287,6 @@ void FileWindow::loadSettings()
     ui->cbmFiles->setFont(font8);
 
     ui->statusBar->showMessage("Settings read", 5000);
-}
-
-FileWindow::~FileWindow()
-{
-    delete ui;
 }
 
 void FileWindow::on_localFolders_clicked(const QModelIndex &index)
@@ -490,17 +515,15 @@ void FileWindow::on_actionView_Home_Folder_triggered()
 
 void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
+
     ui->statusBar->showMessage("Drive status: "+proc_cbmStatus->readAllStandardOutput());
 }
 
 void FileWindow::cbmFileCopyFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
+
     ui->statusBar->showMessage("Copy completed");
     if (autorefresh)
         on_CBMDirectory_clicked();
@@ -559,7 +582,7 @@ void FileWindow::on_copyToCBM_clicked()
             btn_abort = new QPushButton(this);
             connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
             btn_abort->setText("X");
-            btn_abort->setToolTip("Abort the current transfer and reset the CBM bus");
+            btn_abort->setToolTip(tr("Abort the current transfer and reset the CBM bus"));
             btn_abort->setFixedHeight(18);
             btn_abort->setFixedWidth(18);
             ui->statusBar->addPermanentWidget(progbar);
@@ -642,7 +665,7 @@ void FileWindow::timerClick()
 void FileWindow::stopCopy()
 {
     timer->stop();
-    proc_d64copy->kill(); // this will call cbmCopyFinished()
+    proc_d64copy->kill(); // this will call cbmCopyFinished(), so we don't need to manually
     ui->copyToCBM->setEnabled(true);
     QMessageBox::information(this, "Copy Aborted", "The copy operation was terminated", QMessageBox::Ok, QMessageBox::Ok);
 }
@@ -700,23 +723,16 @@ void FileWindow::cbmCopyProgress()
 
 void FileWindow::cbmResetFinished(int,QProcess::ExitStatus)
 {
-    // remove the progress bar
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     ui->statusBar->showMessage("The CBM bus was reset");
 }
 
 void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
 {
-    // remove the progress bar
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     QString output = proc_cbmDetect->readAllStandardOutput().trimmed();
-    //qDebug() << output;
 
     QRegExp rx("(\\d+):\\s*(.*)");
     if (rx.indexIn(output) >= 0)
@@ -730,25 +746,19 @@ void FileWindow::cbmDetectFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmInitFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     ui->statusBar->showMessage("Initialization complete");
 }
 
 void FileWindow::morseFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 }
 
 void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     ui->statusBar->showMessage("Validation complete");
 }
@@ -757,9 +767,7 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
 {
     QString output = proc_cbmFormat->readAllStandardOutput();
 
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     detailsInfoDialog *dlg = new detailsInfoDialog(this);
     dlg->setText("The format command produced the following output:");
@@ -848,13 +856,6 @@ QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
                 }
             }
         }
-/*    } else if (usec64font && !useInternalcbmctrl)
-    {
-        for (int i = 0; i < pS.length(); i++)
-        {
-            int chr = (unsigned char)pS.at(i);
-            output.append(QChar(cbm_petscii2ascii_c(chr)));
-        } */
     } else
     {
         return QString(pS);
@@ -864,10 +865,7 @@ QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
 
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
-    // remove the progress bar
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     // clear the file list
     ui->cbmFiles->clear();
@@ -904,24 +902,6 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     ui->cbmFiles->resizeColumnToContents(2);
 }
 
-bool FileWindow::confirmExecute(QString command, QStringList params)
-{
-    QFileInfo file(command);
-
-    if (!file.isExecutable())
-    {
-        QMessageBox::warning(this, "QtCBM", file.baseName()+"."+file.completeSuffix()+" is not an executable file.", QMessageBox::Ok, QMessageBox::Ok);
-        return false;
-    }
-
-    if (showcmd)
-    {
-        QFileInfo file = QFileInfo(command);
-        return (QMessageBox::information(this, "QtCBM", "About to execute:\n\n"+file.baseName()+"."+file.completeSuffix()+" "+params.join(' ')+"\n\nContinue?", QMessageBox::Yes|QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes);
-    }
-    return true;
-}
-
 void FileWindow::on_CBMDirectory_clicked()
 {
     QStringList params;
@@ -949,12 +929,6 @@ void FileWindow::on_CBMDirectory_clicked()
             disableUIElements();
         }
     }
-}
-
-void FileWindow::on_actionAbout_triggered()
-{
-    aboutDialog *dlg = new aboutDialog(this);
-    dlg->show();
 }
 
 void FileWindow::on_CBMFormat_clicked()
@@ -1123,9 +1097,7 @@ void FileWindow::on_copyFromCBM_clicked()
 
 void FileWindow::cbmRenameFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     ui->statusBar->showMessage("File renamed");
     if (autorefresh)
@@ -1134,9 +1106,7 @@ void FileWindow::cbmRenameFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
 {
-    ui->statusBar->removeWidget(progbar);
-    delete progbar;
-    enableUIElements();
+    resetUI();
 
     ui->statusBar->showMessage("File erased");
     if (autorefresh)
@@ -1277,9 +1247,4 @@ void FileWindow::on_actionMorse_Code_triggered()
             disableUIElements();
         }
     }
-}
-
-void FileWindow::on_action_Quit_triggered()
-{
-    this->close();
 }
