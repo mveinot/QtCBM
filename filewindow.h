@@ -41,6 +41,7 @@ public:
     QString stringToPETSCII(QByteArray, bool);
     QString stringToPETSCII(QString);
     void writeD64FromArgs(QString);
+    void writeCBMconf();
     void disableUIElements();
     void enableUIElements();
 
@@ -132,6 +133,7 @@ private:
     QString cbmcopy;
     QString morse;
     QString transfermode;
+    QString cableType;
     QString d64imageFile;
     QString fileFromArgs;
 
@@ -140,6 +142,7 @@ private:
     bool autorefresh;
     bool usec64font;
     bool cbmctrlhasraw;
+    bool generateRandomDiskname;
     int deviceid;
     int lastBlock;
     int currBlock;

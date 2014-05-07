@@ -7,6 +7,7 @@
 #include <QFontDatabase>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QProcessEnvironment>
 #include <QProgressBar>
 #include <QRegExp>
 #include <QString>
@@ -78,6 +79,25 @@ FileWindow::FileWindow(QWidget *parent) :
 
     proc_cbmcopy = new QProcess(this);
     connect(proc_cbmcopy, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(cbmFileCopyFinished(int,QProcess::ExitStatus)));
+
+#ifdef Q_OS_OSX
+    // Set up the environment to use bundled opencbm on Mac
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("OPENCBM_HOME", QCoreApplication::applicationDirPath());
+
+    proc_cbmcopy->setProcessEnvironment(env);
+    proc_cbmDetect->setProcessEnvironment(env);
+    proc_cbmDir->setProcessEnvironment(env);
+    proc_cbmFormat->setProcessEnvironment(env);
+    proc_cbmInit->setProcessEnvironment(env);
+    proc_cbmRename->setProcessEnvironment(env);
+    proc_cbmReset->setProcessEnvironment(env);
+    proc_cbmScratch->setProcessEnvironment(env);
+    proc_cbmStatus->setProcessEnvironment(env);
+    proc_cbmValidate->setProcessEnvironment(env);
+    proc_d64copy->setProcessEnvironment(env);
+    proc_morse->setProcessEnvironment(env);
+#endif
 
     // initialize the settings object
     settings = new QSettings("mvgrafx", "QtCBM");
@@ -211,22 +231,63 @@ void FileWindow::writeD64FromArgs(QString filename)
     on_copyToCBM_clicked();
 }
 
+void FileWindow::writeCBMconf()
+{
+    QString confPath = QCoreApplication::applicationDirPath()+"/etc/opencbm.conf";
+    QDir appPath(QCoreApplication::applicationDirPath()+"/etc");
+
+    if (!appPath.exists())
+    {
+        if (appPath.mkdir("."))
+        {
+            QMessageBox::warning(this,"QtCBM","Unable to create opencbm.conf", QMessageBox::Ok, QMessageBox::Ok);
+            //return;
+        }
+    }
+
+    QFile confFile(confPath);
+    if (confFile.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+        QTextStream stream(&confFile);
+        stream << "[plugins]" << endl;
+        stream << "default="+cableType << endl;
+        stream << "[xu1541]" << endl;
+        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xu1541.0.4.99.97.dylib" << endl;
+        stream << "[xum1541]" << endl;
+        stream << "location="+QCoreApplication::applicationDirPath()+"/plugins/libopencbm-xum1541.0.4.99.97.dylib" << endl;
+    } else
+    {
+        QMessageBox::warning(this,"QtCBM","Unable to write opencbm.conf: "+confFile.errorString(), QMessageBox::Ok, QMessageBox::Ok);
+        return;
+    }
+
+    confFile.close();
+}
+
 void FileWindow::loadSettings()
 {
     QFont font11;
     QFont font8;
 
+    //qDebug() << settingsDialog::findCBMUtil("cbmctrl");
+
     // read in settings
-    cbmctrl = settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString();
-    cbmforng = settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString();
-    d64copy = settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString();
-    cbmcopy = settings->value("tools/cbmcopy", QStandardPaths::findExecutable("cbmcopy.exe")).toString();
-    morse = settings->value("tools/morse", QStandardPaths::findExecutable("morse.exe")).toString();
+    cbmctrl = settings->value("tools/cbmctrl", settingsDialog::findCBMUtil("cbmctrl")).toString();
+    cbmforng = settings->value("tools/cbmforng", settingsDialog::findCBMUtil("cbmforng")).toString();
+    d64copy = settings->value("tools/d64copy", settingsDialog::findCBMUtil("d64copy")).toString();
+    cbmcopy = settings->value("tools/cbmcopy", settingsDialog::findCBMUtil("cbmcopy")).toString();
+    morse = settings->value("tools/morse", settingsDialog::findCBMUtil("morse")).toString();
     deviceid = settings->value("deviceid", 8).toInt();
     transfermode = settings->value("transfermode", "auto").toString();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
     usec64font = settings->value("usec64font", false).toBool();
+    generateRandomDiskname = settings->value("genrandomdisk", false).toBool();
+    cableType = settings->value("cableType", "xum1541").toString();
+
+#ifdef Q_OS_OSX
+    writeCBMconf();
+#endif
 
     // Load the C64 system font from resources
     fontDB = new QFontDatabase();
@@ -425,6 +486,21 @@ void FileWindow::act_viewFile()
     } else {
         QDesktopServices::openUrl(QUrl::fromLocalFile(model->filePath(index.at(0))));
     }
+}
+
+QString randomString(const int len)
+{
+    QString output = "";
+
+    static const char alpha[] =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    for (int i = 0; i < len; i++)
+    {
+        output.append(alpha[rand() % (sizeof(alpha) -1)]);
+    }
+
+    return output;
 }
 
 QString FileWindow::formatFileSize(qint64 size)
@@ -765,7 +841,7 @@ void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
 {
-    QString output = proc_cbmFormat->readAllStandardOutput();
+    QString output = proc_cbmFormat->readAllStandardError();
 
     resetUI();
 
@@ -775,6 +851,7 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
     dlg->exec();
 }
 
+/*
 char cbm_petscii2ascii_c(char Character)
 {
     switch (Character & 0xff) {
@@ -784,16 +861,16 @@ char cbm_petscii2ascii_c(char Character)
       case 0x40:
       case 0x60:
         return Character;
-      case 0xa0:                                /* CBM: Shifted Space */
+      case 0xa0:     // cbm shifted space
       case 0xe0:
         return ' ';
       default:
         switch (Character & 0xe0) {
-          case 0x40: /* 41 - 7E */
+          case 0x40: // 41 - 7E
           case 0x60:
             return (Character ^ 0x20);
 
-          case 0xc0: /* C0 - DF */
+          case 0xc0: // C0 - DF
             return (Character ^ 0x80);
 
       }
@@ -801,6 +878,7 @@ char cbm_petscii2ascii_c(char Character)
 
     return ((isprint(Character) ? Character : '.'));
 }
+*/
 
 QString FileWindow::stringToPETSCII(QString pS)
 {
@@ -936,33 +1014,39 @@ void FileWindow::on_CBMFormat_clicked()
     QString diskLabel = "";
     bool ok;
 
+    if (generateRandomDiskname)
+        diskLabel = randomString(8)+","+QString::number(rand() % 100);
+
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
-        diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, "", &ok).toUpper();
+        diskLabel = QInputDialog::getText(this, "QtCBM", "Diskname,ID:", QLineEdit::Normal, diskLabel, &ok).toUpper();
         QRegExp rx("[\\s\\S]+,\\d+");
-        if (rx.indexIn(diskLabel) >= 0)
+        if (ok)
         {
-            if (ok && confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
+            if (rx.indexIn(diskLabel) >= 0)
             {
-                progbar = new QProgressBar(this);
-                progbar->setMinimum(0);
-                progbar->setMaximum(0);
-                ui->statusBar->addPermanentWidget(progbar);
+                if (confirmExecute(cbmforng, QStringList() << QString::number(deviceid) << diskLabel))
+                {
+                    progbar = new QProgressBar(this);
+                    progbar->setMinimum(0);
+                    progbar->setMaximum(0);
+                    ui->statusBar->addPermanentWidget(progbar);
 
-                proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
-                if (!proc_cbmFormat->waitForStarted())
-                {
-                    QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
-                    ui->statusBar->removeWidget(progbar);
-                    delete progbar;
-                } else
-                {
-                    disableUIElements();
+                    proc_cbmFormat->start(cbmforng, QStringList() << QString::number(deviceid) << diskLabel);
+                    if (!proc_cbmFormat->waitForStarted())
+                    {
+                        QMessageBox::warning(this,"Error", "Failed to execute "+cbmforng+"\n\nExit status: "+QString::number(proc_cbmFormat->exitCode()), QMessageBox::Ok, QMessageBox::Ok);
+                        ui->statusBar->removeWidget(progbar);
+                        delete progbar;
+                    } else
+                    {
+                        disableUIElements();
+                    }
                 }
+            } else
+            {
+                QMessageBox::warning(this, "QtCBM", "Your input wasn't of the form \"Label,ID\". Unable to format with this input.");
             }
-        } else
-        {
-            QMessageBox::warning(this, "QtCBM", "Your input wasn't of the form \"Label,ID\". Unable to format with this input.");
         }
     }
 }
