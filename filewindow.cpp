@@ -605,6 +605,79 @@ void FileWindow::cbmFileCopyFinished(int, QProcess::ExitStatus)
         on_CBMDirectory_clicked();
 }
 
+void FileWindow::copyToCBM(QStringList list)
+{
+//    QFileInfo fileinfo(list);
+//    QString ext = fileinfo.completeSuffix().toUpper();
+/*
+    if (ext == "D64")
+    {
+        if (confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(list) << QString::number(deviceid)))
+        {
+            progbar = new QProgressBar(this);
+            progbar->setMinimum(0);
+            progbar->setMaximum(100);
+            progbar->setTextVisible(true);
+            btn_abort = new QPushButton(this);
+            connect(btn_abort, SIGNAL(clicked()), this, SLOT(stopCopy()));
+            btn_abort->setText("X");
+            btn_abort->setToolTip(tr("Abort the current transfer and reset the CBM bus"));
+            btn_abort->setFixedHeight(18);
+            btn_abort->setFixedWidth(18);
+            ui->statusBar->addPermanentWidget(progbar);
+            ui->statusBar->addPermanentWidget(btn_abort);
+            timer = new QTimer(this);
+            timer->setInterval(10000);
+            connect(timer, SIGNAL(timeout()), this, SLOT(timerClick()));
+            ui->copyToCBM->setEnabled(false);
+            //QFileInfo file(fileToCopy);
+            ui->statusBar->showMessage("Writing: "+fileinfo.baseName()+"."+fileinfo.completeSuffix()+"...");
+            d64imageFile = fileinfo.baseName()+"."+fileinfo.completeSuffix();
+
+            proc_d64copy->start(d64copy, QStringList() << "--transfer="+transfermode << QDir::toNativeSeparators(list) << QString::number(deviceid), QIODevice::ReadWrite | QIODevice::Text);
+            if (!proc_d64copy->waitForStarted())
+            {
+                QMessageBox::warning(this,"Error", "Failed to execute "+d64copy+"\n\nExit status: "+QString::number(proc_d64copy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+                ui->statusBar->removeWidget(progbar);
+                ui->statusBar->removeWidget(btn_abort);
+                delete progbar;
+                delete btn_abort;
+            } else
+            {
+                timer->start();
+                disableUIElements();
+                currBlock = 0;
+                lastBlock = 0;
+            }
+        }
+        */
+    if (confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << list))
+    {
+        progbar = new QProgressBar(this);
+        progbar->setMinimum(0);
+        progbar->setMaximum(0);
+        progbar->setTextVisible(true);
+        ui->statusBar->addPermanentWidget(progbar);
+        ui->copyToCBM->setEnabled(false);
+        //QFileInfo file(fileToCopy);
+        ui->statusBar->showMessage("Writing multiple files..."); //: "+fileinfo.baseName()+"."+fileinfo.completeSuffix()+"...");
+        //d64imageFile = file.baseName()+"."+file.completeSuffix();
+
+        proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-w" << QString::number(deviceid) << list, QIODevice::ReadWrite | QIODevice::Text);
+        if (!proc_cbmcopy->waitForStarted())
+        {
+            QMessageBox::warning(this,"Error", "Failed to execute "+cbmcopy+"\n\nExit status: "+QString::number(proc_cbmcopy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
+            ui->statusBar->removeWidget(progbar);
+            ui->statusBar->removeWidget(btn_abort);
+            delete progbar;
+            delete btn_abort;
+        } else
+        {
+            disableUIElements();
+        }
+    }
+}
+
 void FileWindow::on_copyToCBM_clicked()
 {
     QString fileToCopy;
@@ -633,7 +706,16 @@ void FileWindow::on_copyToCBM_clicked()
                 return;
             } else if (index.count() > 1)
             {
-                QMessageBox::warning(this,tr("Error"), tr("Can't image multiple files"), QMessageBox::Ok, QMessageBox::Ok);
+                QStringList fileList;
+                if (QMessageBox::information(this,tr("QtCBM"), tr("Attempting to copy multiple files. Non-PRG files will not be copied. Proceed?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
+                {
+                    for (int i = 0; i < index.count(); i++)
+                    {
+                        qDebug() << model->filePath(index.at(i));
+                        fileList << QDir::toNativeSeparators(model->filePath(index.at(i)));
+                    }
+                    copyToCBM(fileList);
+                }
                 return;
             } else {
                 fileToCopy = model->filePath(index.at(0));
@@ -891,8 +973,6 @@ QString FileWindow::stringToPETSCII(QString pS)
                 output.append(pS.at(i).unicode()+57344);
             else
                 output.append(pS.at(i).unicode());
-
-            //qDebug() << pS.at(i).unicode();
         }
         return output;
     } else
@@ -901,15 +981,12 @@ QString FileWindow::stringToPETSCII(QString pS)
 
 QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
 {
-    //QByteArray input = pS.toLocal8Bit();
-
     QString output = "";
     if (usec64font && cbmctrlhasraw)
     {
         for (int i = 0; i < pS.length(); i++)
         {
             int chr = (unsigned char)pS.at(i);
-            //qDebug() << chr;
 
             if (keepSpecialChars)
             {
@@ -1112,9 +1189,7 @@ void FileWindow::on_copyFromCBM_clicked()
                 progbar->setTextVisible(true);
                 ui->statusBar->addPermanentWidget(progbar);
                 ui->copyFromCBM->setEnabled(false);
-                //QFileInfo file(fileToCopy);
                 ui->statusBar->showMessage("Reading: "+cbmFileName+"...");
-                //d64imageFile = file.baseName()+"."+file.completeSuffix();
 
                 proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName), QIODevice::ReadWrite | QIODevice::Text);
                 if (!proc_cbmcopy->waitForStarted())

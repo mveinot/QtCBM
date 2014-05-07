@@ -41,6 +41,7 @@ public:
     QString stringToPETSCII(QByteArray, bool);
     QString stringToPETSCII(QString);
     void writeD64FromArgs(QString);
+    void copyToCBM(QStringList list);
     void writeCBMconf();
     void disableUIElements();
     void enableUIElements();
