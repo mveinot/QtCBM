@@ -15,6 +15,7 @@ class settingsDialog : public QDialog
 
 public:
     explicit settingsDialog(QWidget *parent = 0);
+    static QString findCBMUtil(QString name);
     ~settingsDialog();
 
 signals:
@@ -32,6 +33,7 @@ private:
     Ui::settingsDialog *ui;
     QSettings *settings;
     QString getTransferMode();
+    QString getCableType();
 };
 
 #endif // SETTINGSDIALOG_H

@@ -10,19 +10,23 @@ settingsDialog::settingsDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
+#ifdef Q_OS_OSX
+    ui->cableFrame->setEnabled(true);
+#endif
+
     settings = new QSettings("mvgrafx", "QtCBM");
-    ui->input_cbmctrl->setText(settings->value("tools/cbmctrl", QStandardPaths::findExecutable("cbmctrl.exe")).toString());
-    ui->input_cbmforng->setText(settings->value("tools/cbmforng", QStandardPaths::findExecutable("cbmforng.exe")).toString());
-    ui->input_d64copy->setText(settings->value("tools/d64copy", QStandardPaths::findExecutable("d64copy.exe")).toString());
-    ui->input_cbmcopy->setText(settings->value("tools/cbmcopy", QStandardPaths::findExecutable("cbmcopy.exe")).toString());
-    ui->input_morse->setText(settings->value("tools/morse", QStandardPaths::findExecutable("morse.exe")).toString());
+    ui->input_cbmctrl->setText(settings->value("tools/cbmctrl", findCBMUtil("cbmctrl")).toString());
+    ui->input_cbmforng->setText(settings->value("tools/cbmforng", findCBMUtil("cbmforng")).toString());
+    ui->input_d64copy->setText(settings->value("tools/d64copy", findCBMUtil("d64copy")).toString());
+    ui->input_cbmcopy->setText(settings->value("tools/cbmcopy", findCBMUtil("cbmcopy")).toString());
+    ui->input_morse->setText(settings->value("tools/morse", findCBMUtil("morse")).toString());
     ui->input_cbmdevice->setValue(settings->value("deviceid", 8).toInt());
     ui->autoRefresh->setChecked(settings->value("autorefresh", true).toBool());
     ui->showCommands->setChecked(settings->value("showcmd", false).toBool());
     ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
-    //ui->useInternalCBMctrl->setChecked(settings->value("internalcbmctrl", true).toBool());
+    ui->genRandomDiskname->setChecked(settings->value("genrandomdisk", false).toBool());
     QString transfermode = settings->value("transfermode", "auto").toString();
-    //on_useC64font_clicked(ui->useC64font->isChecked());
+    QString cableType = settings->value("cableType", "xum1541").toString();
 
     if (transfermode == "original")
         ui->trOriginal->setChecked(true);
@@ -34,11 +38,29 @@ settingsDialog::settingsDialog(QWidget *parent) :
         ui->trParallel->setChecked(true);
     if (transfermode == "auto")
         ui->trAuto->setChecked(true);
+
+    if (cableType == "xu1541")
+        ui->cableXU->setChecked(true);
+    if (cableType == "xum1541")
+        ui->cableXUM->setChecked(true);
 }
 
 settingsDialog::~settingsDialog()
 {
     delete ui;
+}
+
+QString settingsDialog::findCBMUtil(QString name)
+{
+#ifdef Q_OS_WIN
+    return QStandardPaths::findExecutable(name+".exe")).toString();
+#endif
+#ifdef Q_OS_OSX
+    return QCoreApplication::applicationDirPath()+"/bin/"+name;
+#endif
+#ifdef Q_OS_LINUX
+    return QStandardPaths::findExecutable(name)).toString();
+#endif
 }
 
 void settingsDialog::on_browse_cbmctrl_clicked()
@@ -78,10 +100,20 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("showcmd", ui->showCommands->isChecked());
     settings->setValue("autorefresh", ui->autoRefresh->isChecked());
     settings->setValue("usec64font", ui->useC64font->isChecked());
-    //settings->setValue("internalcbmctrl", ui->useInternalCBMctrl->isChecked());
+    settings->setValue("genrandomdisk", ui->genRandomDiskname->isChecked());
+    settings->setValue("cableType", getCableType());
     settings->sync();
 
     emit settingsChanged();
+}
+
+QString settingsDialog::getCableType()
+{
+    if (ui->cableXU->isChecked())
+        return "xu1541";
+    if (ui->cableXUM->isChecked())
+        return "xum1541";
+    return "xum1541";
 }
 
 QString settingsDialog::getTransferMode()
@@ -98,17 +130,3 @@ QString settingsDialog::getTransferMode()
         return "auto";
     return "auto";
 }
-
-/*
-void settingsDialog::on_useC64font_clicked(bool checked)
-{
-    if (!checked)
-    {
-        ui->useInternalCBMctrl->setChecked(false);
-        ui->useInternalCBMctrl->setEnabled(false);
-    } else
-    {
-        ui->useInternalCBMctrl->setEnabled(true);
-    }
-}
-*/
