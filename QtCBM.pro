@@ -17,17 +17,24 @@ SOURCES += main.cpp\
         filewindow.cpp \
     settingsdialog.cpp \
     aboutdialog.cpp \
-    detailsinfodialog.cpp
+    detailsinfodialog.cpp \
+    cbmroutines.cpp
 
 HEADERS  += filewindow.h \
     settingsdialog.h \
     aboutdialog.h \
-    detailsinfodialog.h
+    detailsinfodialog.h \
+    cbmroutines.h
 
 FORMS    += filewindow.ui \
     settingsdialog.ui \
     aboutdialog.ui \
     detailsinfodialog.ui
+
+LIBS += -L/usr/local/lib -ldiskimage
+INCLUDEPATH += /usr/local/include
+
+ICON = QtCBM.icns
 
 RESOURCES = QtCBM.qrc
 RC_ICONS = QtCBM.ico

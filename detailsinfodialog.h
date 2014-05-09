@@ -15,6 +15,7 @@ class detailsInfoDialog : public QDialog
 public:
     explicit detailsInfoDialog(QWidget *parent = 0);
     void setDetailText(QString);
+    void setDetailText(QStringList);
     void setText(QString);
     ~detailsInfoDialog();
 
