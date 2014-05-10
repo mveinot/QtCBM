@@ -157,7 +157,7 @@ int di_sectors_per_track(ImageType type, int track) {
     if (track > 35) {
       track -= 35;
     }
-    // fall through
+    /* fall through */
   case D64:
     if (track < 18) {
       return(21);
@@ -790,7 +790,8 @@ RawDirEntry *find_file_entry(DiskImage *di, unsigned char *rawpattern, FileType 
 
 RawDirEntry *alloc_file_entry(DiskImage *di, unsigned char *rawname, FileType type) {
   unsigned char *buffer;
-  TrackSector ts, lastts;
+  TrackSector ts;
+  TrackSector lastts;
   RawDirEntry *rde;
   int offset;
 

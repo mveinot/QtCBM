@@ -1,6 +1,6 @@
 PROJECT = libdiskimage.a
 OBJECTS = diskimage.o
-CFLAGS = -Wall -pedantic
+CFLAGS = -Wall
 CC = gcc
 
 all: $(PROJECT)
@@ -9,7 +9,7 @@ all: $(PROJECT)
 	$(CC) -c $(CFLAGS) $<
 
 $(PROJECT): $(OBJECTS)
-	libtool -o $(PROJECT) -static $(OBJECTS)
+	ar rcs $(PROJECT) $(OBJECTS)
 
 clean:
 	rm -f *.o *.a
