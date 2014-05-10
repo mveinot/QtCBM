@@ -238,7 +238,7 @@ void FileWindow::writeCBMconf()
     QString confPath = QCoreApplication::applicationDirPath()+"/etc/opencbm.conf";
     QDir appPath(QCoreApplication::applicationDirPath()); //+"/etc");
 
-    qDebug() << appPath.absolutePath();
+    //qDebug() << appPath.absolutePath();
 
     if (!appPath.exists("etc/"))
     {
@@ -1165,12 +1165,12 @@ QString FileWindow::getSelectedCBMFile(QString message)
         QMessageBox::warning(this, "QtCBM", message, QMessageBox::Ok, QMessageBox::Ok);
         return "";
     }
-    return items.at(0)->data(2,0).toString();
+    return items.at(0)->data(2,0).toString().toUpper();
 }
 
 void FileWindow::on_CBMScratch_clicked()
 {
-    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.").toUpper();
+    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.");
     if (cbmFilename.isEmpty())
         return;
 
