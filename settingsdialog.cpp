@@ -53,13 +53,13 @@ settingsDialog::~settingsDialog()
 QString settingsDialog::findCBMUtil(QString name)
 {
 #ifdef Q_OS_WIN
-    return QStandardPaths::findExecutable(name+".exe")).toString();
+    return QStandardPaths::findExecutable(name+".exe");
 #endif
 #ifdef Q_OS_OSX
     return QCoreApplication::applicationDirPath()+"/bin/"+name;
 #endif
 #ifdef Q_OS_LINUX
-    return QStandardPaths::findExecutable(name)).toString();
+    return QStandardPaths::findExecutable(name);
 #endif
 }
 

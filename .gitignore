@@ -7,3 +7,4 @@ QtCBM_resource.rc
 *.bak
 *.dat
 *.autosave
+*.o

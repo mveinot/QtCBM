@@ -22,7 +22,9 @@
 #include "ui_filewindow.h"
 #include "settingsdialog.h"
 #include "aboutdialog.h"
+#include "cbmroutines.h"
 #include "detailsinfodialog.h"
+//#include "diskimage/diskimage.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -234,11 +236,13 @@ void FileWindow::writeD64FromArgs(QString filename)
 void FileWindow::writeCBMconf()
 {
     QString confPath = QCoreApplication::applicationDirPath()+"/etc/opencbm.conf";
-    QDir appPath(QCoreApplication::applicationDirPath()+"/etc");
+    QDir appPath(QCoreApplication::applicationDirPath()); //+"/etc");
 
-    if (!appPath.exists())
+    //qDebug() << appPath.absolutePath();
+
+    if (!appPath.exists("etc/"))
     {
-        if (appPath.mkdir("."))
+        if (!appPath.mkdir("etc/"))
         {
             QMessageBox::warning(this,"QtCBM","Unable to create opencbm.conf", QMessageBox::Ok, QMessageBox::Ok);
             //return;
@@ -386,7 +390,7 @@ void FileWindow::localFiles_selectionChanged(const QItemSelection &selected, con
         size+=file->size();
     }
     blocks = size / 254;
-    QString sizeString = formatFileSize(size);
+    QString sizeString = CBMroutines::formatFileSize(size);
     QString blockString = QString::number(blocks);
     ui->selectedKB->setText(sizeString);
     ui->selectedBlocks->setText(blockString.append(" blocks"));
@@ -485,47 +489,13 @@ void FileWindow::act_viewFile()
         QMessageBox::warning(this,tr("Error"), tr("Can't run multiple files"), QMessageBox::Ok, QMessageBox::Ok);
     } else {
         QDesktopServices::openUrl(QUrl::fromLocalFile(model->filePath(index.at(0))));
-    }
-}
 
-QString randomString(const int len)
-{
-    QString output = "";
+        detailsInfoDialog *dlg = new detailsInfoDialog(this);
+        dlg->setText("The selected disk image contains the following files:");
+        dlg->setDetailText(CBMroutines::list_dir(model->filePath(index.at(0))));
+        dlg->exec();
 
-    static const char alpha[] =
-            "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    for (int i = 0; i < len; i++)
-    {
-        output.append(alpha[rand() % (sizeof(alpha) -1)]);
-    }
-
-    return output;
-}
-
-QString FileWindow::formatFileSize(qint64 size)
-{
-    float outputsize = 0;
-
-    if (size > (1024*1024*1024))
-    {
-        outputsize = size / (1024*1024*1024);
-        return QString::number(outputsize).append(" GB");
-    }
-    else if (size > (1024*1024))
-    {
-        outputsize = size / (1024*1024);
-        return QString::number(outputsize).append(" MB");
-    }
-    else if (size > (1024))
-    {
-        outputsize = size / (1024);
-        return QString::number(outputsize).append(" KB");
-    }
-    else
-    {
-        outputsize = size;
-        return QString::number(outputsize).append(" B");
+        CBMroutines::copyFromD64(model->filePath(index.at(0)), "death", "/Users/vmark/");
     }
 }
 
@@ -711,7 +681,7 @@ void FileWindow::on_copyToCBM_clicked()
                 {
                     for (int i = 0; i < index.count(); i++)
                     {
-                        qDebug() << model->filePath(index.at(i));
+                        //qDebug() << model->filePath(index.at(i));
                         fileList << QDir::toNativeSeparators(model->filePath(index.at(i)));
                     }
                     copyToCBM(fileList);
@@ -933,91 +903,6 @@ void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
     dlg->exec();
 }
 
-/*
-char cbm_petscii2ascii_c(char Character)
-{
-    switch (Character & 0xff) {
-      case 0x0a:
-      case 0x0d:
-          return '\n';
-      case 0x40:
-      case 0x60:
-        return Character;
-      case 0xa0:     // cbm shifted space
-      case 0xe0:
-        return ' ';
-      default:
-        switch (Character & 0xe0) {
-          case 0x40: // 41 - 7E
-          case 0x60:
-            return (Character ^ 0x20);
-
-          case 0xc0: // C0 - DF
-            return (Character ^ 0x80);
-
-      }
-    }
-
-    return ((isprint(Character) ? Character : '.'));
-}
-*/
-
-QString FileWindow::stringToPETSCII(QString pS)
-{
-    QString output = "";
-    if (usec64font && cbmctrlhasraw)
-    {
-        for (int i = 0; i < pS.length(); i++)
-        {
-            if (pS.at(i).unicode() < 256)
-                output.append(pS.at(i).unicode()+57344);
-            else
-                output.append(pS.at(i).unicode());
-        }
-        return output;
-    } else
-        return pS;
-}
-
-QString FileWindow::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true)
-{
-    QString output = "";
-    if (usec64font && cbmctrlhasraw)
-    {
-        for (int i = 0; i < pS.length(); i++)
-        {
-            int chr = (unsigned char)pS.at(i);
-
-            if (keepSpecialChars)
-            {
-                if (chr != 32 && chr != 34 && (chr > 127 || (chr >= 33 && chr < 48) || (chr > 57 && chr <= 91)))
-                {
-                    output.append(QChar(chr+57344));
-                } else
-                {
-                    output.append(QChar(chr));
-                }
-            } else
-            {
-                if (chr >= 32 && chr <= 91)
-                {
-                    output.append(QChar(chr+57344));
-                } else if (chr >= 97 && chr <= 122)
-                {
-                    output.append(QChar(chr-32+57344));
-                } else
-                {
-                    output.append(QChar(chr));
-                }
-            }
-        }
-    } else
-    {
-        return QString(pS);
-    }
-    return output;
-}
-
 void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
     resetUI();
@@ -1032,24 +917,24 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
         QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
         QRegExp rxFreeSpace("(\\d+)\\s\\S\\S\\S\\S\\S\\S\\s\\S\\S\\S\\S");
 
-        QString regstring = stringToPETSCII(dirlist.at(i));
+        QString regstring = CBMroutines::stringToPETSCII(dirlist.at(i), usec64font, cbmctrlhasraw);
 
         if (rxDirEntry.indexIn(regstring) >= 0)
         {
             QTreeWidgetItem *item = new QTreeWidgetItem();
-            item->setText(0, stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false));
-            item->setText(1, stringToPETSCII(formatFileSize(rxDirEntry.cap(1).toInt()*254)));
-            item->setText(2, stringToPETSCII(rxDirEntry.cap(2)));
+            item->setText(0, CBMroutines::stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false, usec64font, cbmctrlhasraw));
+            item->setText(1, CBMroutines::stringToPETSCII(CBMroutines::formatFileSize(rxDirEntry.cap(1).toInt()*254), usec64font, cbmctrlhasraw));
+            item->setText(2, CBMroutines::stringToPETSCII(rxDirEntry.cap(2), usec64font, cbmctrlhasraw));
             item->setText(3, rxDirEntry.cap(3).toUpper());
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks ("+formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
-            ui->freeSpace->setText(stringToPETSCII(tmp_fs.toLatin1(), false));
+            QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks ("+CBMroutines::formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
+            ui->freeSpace->setText(CBMroutines::stringToPETSCII(tmp_fs.toLatin1(), false, usec64font, cbmctrlhasraw));
         } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            ui->diskLabel->setText(stringToPETSCII(rxLabel.cap(2).trimmed()));
-            ui->diskId->setText(stringToPETSCII(rxLabel.cap(3).trimmed()));
+            ui->diskLabel->setText(CBMroutines::stringToPETSCII(rxLabel.cap(2).trimmed(), usec64font, cbmctrlhasraw));
+            ui->diskId->setText(CBMroutines::stringToPETSCII(rxLabel.cap(3).trimmed(), usec64font, cbmctrlhasraw));
         }
     }
     ui->cbmFiles->resizeColumnToContents(0);
@@ -1092,7 +977,7 @@ void FileWindow::on_CBMFormat_clicked()
     bool ok;
 
     if (generateRandomDiskname)
-        diskLabel = randomString(8)+","+QString::number(rand() % 100);
+        diskLabel = CBMroutines::randomString(8)+","+QString::number(rand() % 100);
 
     if (QMessageBox::question(this, "QtCBM", "This will erase ALL data on the floppy disk. Continue?", QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes) == QMessageBox::Yes)
     {
@@ -1280,7 +1165,7 @@ QString FileWindow::getSelectedCBMFile(QString message)
         QMessageBox::warning(this, "QtCBM", message, QMessageBox::Ok, QMessageBox::Ok);
         return "";
     }
-    return items.at(0)->data(2,0).toString();
+    return items.at(0)->data(2,0).toString().toUpper();
 }
 
 void FileWindow::on_CBMScratch_clicked()

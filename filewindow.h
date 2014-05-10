@@ -37,9 +37,9 @@ public:
      * equivalent value in KB, MB, or GB
      * \return a QString with the converted value
      */
-    QString formatFileSize(qint64);
-    QString stringToPETSCII(QByteArray, bool);
-    QString stringToPETSCII(QString);
+    //QString formatFileSize(qint64);
+    //QString stringToPETSCII(QByteArray, bool);
+    //QString stringToPETSCII(QString);
     void writeD64FromArgs(QString);
     void copyToCBM(QStringList list);
     void writeCBMconf();

@@ -19,6 +19,11 @@ void detailsInfoDialog::setDetailText(QString details)
     ui->detailPane->setText(details);
 }
 
+void detailsInfoDialog::setDetailText(QStringList details)
+{
+    ui->detailPane->setText(details.join('\n'));
+}
+
 void detailsInfoDialog::setText(QString text)
 {
     ui->DialogText->setText(text);
