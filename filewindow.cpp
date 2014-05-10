@@ -1170,7 +1170,7 @@ QString FileWindow::getSelectedCBMFile(QString message)
 
 void FileWindow::on_CBMScratch_clicked()
 {
-    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.");
+    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.").toUpper();
     if (cbmFilename.isEmpty())
         return;
 
