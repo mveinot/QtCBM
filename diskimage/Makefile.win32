@@ -1,0 +1,19 @@
+PROJECT = libdiskimage.a
+OBJECTS = diskimage.o
+CFLAGS = -Wall
+CC = gcc
+
+all: $(PROJECT)
+
+.c.o:
+	$(CC) -c $(CFLAGS) $<
+
+$(PROJECT): $(OBJECTS)
+	ar rcs $(PROJECT) $(OBJECTS)
+
+clean:
+	rm -f *.o *.a
+
+install:
+	cp $(PROJECT) "c:\Qt\Qt5.2.1\5.2.1\mingw48_32\lib"
+	cp diskimage.h "c:\Qt\Qt5.2.1\5.2.1\mingw48_32\include"

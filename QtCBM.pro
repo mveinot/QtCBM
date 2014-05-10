@@ -31,8 +31,17 @@ FORMS    += filewindow.ui \
     aboutdialog.ui \
     detailsinfodialog.ui
 
-LIBS += -L/usr/local/lib -ldiskimage
-INCLUDEPATH += /usr/local/include
+win32 {
+        LIBS += -L'C:\\Qt\\Qt5.2.1\\Tools\\mingw48_32\\lib'
+        INCLUDEPATH += 'C:\\Qt\\Qt5.2.1\\Tools\\mingw48_32\\include'
+}
+
+!win32 {
+        LIBS += -L/usr/local/lib
+        INCLUDEPATH += /usr/local/include
+}
+
+LIBS += -ldiskimage
 
 ICON = QtCBM.icns
 
