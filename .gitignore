@@ -8,3 +8,4 @@ QtCBM_resource.rc
 *.dat
 *.autosave
 *.o
+*.a
