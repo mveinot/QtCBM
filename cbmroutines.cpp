@@ -1,3 +1,6 @@
+#include <QDataStream>
+#include <QFile>
+#include <QMessageBox>
 #include <QtDebug>
 
 #include "cbmroutines.h"
@@ -265,11 +268,18 @@ int CBMroutines::copyFromD64(QString d64, QString filename, QString path)
     DiskImage *di;
     unsigned char buffer[4096];
     ImageFile *infile;
-    FILE *outfile;
+    //FILE *outfile;
     int len;
     unsigned char rawname[16];
     char name[17];
     int size = 0;
+    QFile outfile(path+"/"+filename+".prg");
+
+    if (outfile.exists())
+    {
+        if (QMessageBox::question(0, "QtCBM", "The file \""+filename+"\" already exists. Overwrite?", QMessageBox::Yes | QMessageBox::No, QMessageBox::No) == QMessageBox::No)
+            return -1;
+    }
 
     if ((di = di_load_image(d64.toLocal8Bit().data())) == NULL)
     {
@@ -285,20 +295,27 @@ int CBMroutines::copyFromD64(QString d64, QString filename, QString path)
     if ((infile = di_open(di, rawname, T_PRG, "rb")) == NULL) {
         qDebug() << "Couldn't open file for reading";
         di_free_image(di);
+        return -1;
     }
 
-    if ((outfile = fopen(QString(path+"/"+filename).toLocal8Bit().data(), "wb")) == NULL) {
+    if (!outfile.open(QIODevice::WriteOnly))
+    {
         qDebug() << "Couldn't open file for writing";
         di_close(infile);
         di_free_image(di);
+        return -1;
     }
+    QDataStream out(&outfile);
 
-    while ((len = di_read(infile, buffer, 4096)) > 0) {
-        if (fwrite(buffer, 1, len, outfile) != (size_t)len) {
+    while ((len = di_read(infile, buffer, 4096)) > 0)
+    {
+        if (out.writeRawData((char *)buffer, len) != len)
+        {
             qDebug() << "Write error";
-            fclose(outfile);
+            outfile.close();
             di_close(infile);
             di_free_image(di);
+            return -1;
         }
         size += len;
     }
