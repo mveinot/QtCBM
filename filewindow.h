@@ -63,6 +63,9 @@ private slots:
     void act_renameFile();
     void act_deleteFile();
     void act_viewFile();
+    void act_viewD64();
+
+    void selectedD64contents(QStringList);
 
     void cbmStatusFinished(int,QProcess::ExitStatus);
     void cbmCopyProgress();

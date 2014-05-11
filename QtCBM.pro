@@ -18,18 +18,21 @@ SOURCES += main.cpp\
     settingsdialog.cpp \
     aboutdialog.cpp \
     detailsinfodialog.cpp \
-    cbmroutines.cpp
+    cbmroutines.cpp \
+    selectd64filesdialog.cpp
 
 HEADERS  += filewindow.h \
     settingsdialog.h \
     aboutdialog.h \
     detailsinfodialog.h \
-    cbmroutines.h
+    cbmroutines.h \
+    selectd64filesdialog.h
 
 FORMS    += filewindow.ui \
     settingsdialog.ui \
     aboutdialog.ui \
-    detailsinfodialog.ui
+    detailsinfodialog.ui \
+    selectd64filesdialog.ui
 
 win32 {
         LIBS += -L'C:\\Qt\\Qt5.2.1\\Tools\\mingw48_32\\lib'

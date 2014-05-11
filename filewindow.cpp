@@ -24,6 +24,8 @@
 #include "aboutdialog.h"
 #include "cbmroutines.h"
 #include "detailsinfodialog.h"
+#include "selectd64filesdialog.h"
+#include "version.h"
 //#include "diskimage/diskimage.h"
 
 #ifdef Q_OS_WIN
@@ -34,12 +36,14 @@ FileWindow::FileWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::FileWindow)
 {
-    QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile;
+    QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile, *actOpenD64;
     usec64font = false;
     cbmctrlhasraw = false;
     selectedLocalFolder = "";
 
     ui->setupUi(this);
+
+    this->setWindowTitle("QtCBM v"+QString(__QTCBM_VERSION__));
 
     QString c64TreeStyle = "QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }";
     QString c64LineStyle = "QLineEdit {background-color: #4E2EDE; color: #A7A1FD; }";
@@ -114,14 +118,17 @@ FileWindow::FileWindow(QWidget *parent) :
     actRenameFile = new QAction(tr("Rename..."), ui->localFiles);
     actDeleteFile = new QAction(tr("Delete..."), ui->localFiles);
     actViewFile = new QAction(tr("Run/View"), ui->localFiles);
+    actOpenD64 = new QAction(tr("Examine D64..."), ui->localFiles);
 
     connect(actRenameFile, SIGNAL(triggered()), this, SLOT(act_renameFile()));
     connect(actDeleteFile, SIGNAL(triggered()), this, SLOT(act_deleteFile()));
     connect(actViewFile, SIGNAL(triggered()), this, SLOT(act_viewFile()));
+    connect(actOpenD64, SIGNAL(triggered()), this, SLOT(act_viewD64()));
 
     ui->localFiles->addAction(actRenameFile);
     ui->localFiles->addAction(actDeleteFile);
     ui->localFiles->addAction(actViewFile);
+    ui->localFiles->addAction(actOpenD64);
 
     ui->localFiles->setContextMenuPolicy(Qt::ActionsContextMenu);
 
@@ -354,6 +361,38 @@ void FileWindow::loadSettings()
     ui->statusBar->showMessage("Settings read", 5000);
 }
 
+void FileWindow::selectedD64contents(QStringList list)
+{
+    QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
+    QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
+    QFileInfo fi(model->filePath(index.at(0)));
+    QDir dir(selectedLocalFolder);
+
+    if (!dir.exists(fi.completeBaseName()))
+        if (!dir.mkdir(fi.completeBaseName()))
+        {
+            QMessageBox::critical(this,"QtCBM","Couldn't create destination folder \""+fi.completeBaseName()+"\" in \""+dir.absolutePath()+"\"",QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
+
+    //qDebug() << list.join('\n');
+
+    progbar = new QProgressBar(this);
+    progbar->setMinimum(0);
+    progbar->setMaximum(list.count());
+    progbar->setTextVisible(true);
+    ui->statusBar->addPermanentWidget(progbar);
+
+    for (int i = 0; i < list.count(); i++)
+    {
+        CBMroutines::copyFromD64(model->filePath(index.at(0)), list.at(i), dir.absolutePath()+"/"+fi.completeBaseName());
+        progbar->setValue(i);
+    }
+
+    ui->statusBar->removeWidget(progbar);
+    delete progbar;
+}
+
 void FileWindow::on_localFolders_clicked(const QModelIndex &index)
 {
     QFileSystemModel *model = (QFileSystemModel*)ui->localFolders->model();
@@ -489,13 +528,34 @@ void FileWindow::act_viewFile()
         QMessageBox::warning(this,tr("Error"), tr("Can't run multiple files"), QMessageBox::Ok, QMessageBox::Ok);
     } else {
         QDesktopServices::openUrl(QUrl::fromLocalFile(model->filePath(index.at(0))));
+    }
+}
 
-        detailsInfoDialog *dlg = new detailsInfoDialog(this);
-        dlg->setText("The selected disk image contains the following files:");
-        dlg->setDetailText(CBMroutines::list_dir(model->filePath(index.at(0))));
+void FileWindow::act_viewD64()
+{
+    QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
+    QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
+
+    if (index.count() < 1)
+    {
+        QMessageBox::warning(this,tr("Error"), tr("No files selected"), QMessageBox::Ok, QMessageBox::Ok);
+    } else if (index.count() > 1)
+    {
+        QMessageBox::warning(this,tr("Error"), tr("Can't view multiple files"), QMessageBox::Ok, QMessageBox::Ok);
+    } else
+    {
+        QFileInfo file(model->filePath(index.at(0)));
+        if (file.completeSuffix().toUpper() != "D64")
+        {
+            QMessageBox::warning(this, "QtCBM", "This is not a D64 file", QMessageBox::Ok, QMessageBox::Ok);
+            return;
+        }
+
+        Selectd64FilesDialog *dlg = new Selectd64FilesDialog(this);
+
+        connect(dlg, SIGNAL(sendSelectedContents(QStringList)), this, SLOT(selectedD64contents(QStringList)));
+        dlg->setD64File(model->filePath(index.at(0)));
         dlg->exec();
-
-        CBMroutines::copyFromD64(model->filePath(index.at(0)), "death", "/Users/vmark/");
     }
 }
 

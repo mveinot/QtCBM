@@ -287,7 +287,7 @@ int CBMroutines::copyFromD64(QString d64, QString filename, QString path)
         return -1;
     }
 
-    strncpy(name, filename.toLocal8Bit().data(), 16);
+    strncpy(name, filename.toLower().toLocal8Bit().data(), 16);
     name[16] = 0;
     atop((unsigned char *)name);
     di_rawname_from_name(rawname, name);
