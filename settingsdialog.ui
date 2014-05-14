@@ -130,7 +130,11 @@
            </widget>
           </item>
           <item row="4" column="2">
-           <widget class="QLineEdit" name="input_morse"/>
+           <widget class="QLineEdit" name="input_morse">
+            <property name="clearButtonEnabled">
+             <bool>false</bool>
+            </property>
+           </widget>
           </item>
           <item row="4" column="0">
            <widget class="QLabel" name="label_7">
