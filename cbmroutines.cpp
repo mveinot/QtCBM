@@ -183,8 +183,8 @@ QStringList CBMroutines::list_dir(QString filename)
     char name[17];
     char id[6];
     int type;
-    int closed;
-    int locked;
+    //int closed;
+    //int locked;
     int size;
 
     if ((di = di_load_image(filename.toLocal8Bit().data())) == NULL)
@@ -227,8 +227,8 @@ QStringList CBMroutines::list_dir(QString filename)
 
                 di_name_from_rawname(name, buffer + offset + 5);
                 type = buffer[offset + 2] & 7;
-                closed = buffer[offset + 2] & 0x80;
-                locked = buffer[offset + 2] & 0x40;
+                //closed = buffer[offset + 2] & 0x80;
+                //locked = buffer[offset + 2] & 0x40;
                 size = buffer[offset + 31]<<8 | buffer[offset + 30];
 
                 /* Convert to ascii and add quotes */
