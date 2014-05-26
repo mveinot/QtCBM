@@ -41,7 +41,9 @@ win32 {
 
 !win32 {
         LIBS += -L/usr/local/lib
+        LIBS += -Ldiskimage
         INCLUDEPATH += /usr/local/include
+        INCLUDEPATH += diskimage
 }
 
 LIBS += -ldiskimage
