@@ -305,7 +305,6 @@ void FileWindow::loadSettings()
     fontDB = new QFontDatabase();
     fontDB->addApplicationFont(":/res/fonts/C64_Elite_Mono_v1.0-STYLE.ttf");
     fontDB->addApplicationFont(":/res/fonts/c64.ttf");
-    fontDB->addApplicationFont(":/res/fonts/Consolas.ttf");
 
     QFileInfo file(cbmctrl);
     if (file.isExecutable())
