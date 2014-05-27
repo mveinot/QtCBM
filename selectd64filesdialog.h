@@ -17,7 +17,7 @@ public:
     ~Selectd64FilesDialog();
 
 signals:
-    void sendSelectedContents(QStringList);
+    void sendSelectedContents(QByteArray);
 
 private slots:
     void on_cancelBtn_clicked();

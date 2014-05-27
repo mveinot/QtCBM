@@ -15,7 +15,8 @@ Selectd64FilesDialog::Selectd64FilesDialog(QWidget *parent) :
     ui->d64contents->header()->resizeSection(0, 75);
     ui->d64contents->header()->resizeSection(1, 350);
     ui->d64contents->header()->resizeSection(2, 40);
-    QFont c64font = QFont("C64 Pro Mono", 12);
+    ui->d64contents->hideColumn(3);
+    QFont c64font = QFont("C64 Elite Mono", 12);
     ui->d64contents->setStyleSheet("QTreeWidget {background-color: #4E2EDE; color: #A7A1FD; }");
     ui->d64contents->setFont(c64font);
 }
@@ -28,25 +29,28 @@ Selectd64FilesDialog::~Selectd64FilesDialog()
 void Selectd64FilesDialog::setD64File(QString filename)
 {
     QFileInfo fi(filename);
-    QStringList selectedFiles;
+    QByteArray selectedFiles;
+
     this->setWindowTitle("Contents of "+fi.completeBaseName()+"."+fi.completeSuffix());
 
     if (fi.exists())
     {
         selectedFiles = CBMroutines::list_dir(filename);
 
-        for (int i = 0; i < selectedFiles.count(); i++)
+        QList<QByteArray> dirlist = selectedFiles.split('\n');
+
+        for (int i = 0; i < dirlist.count(); i++)
         {
-            QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
-
-            QString regstring = selectedFiles.at(i);
-
-            if (rxDirEntry.indexIn(regstring) >= 0)
+            QList<QByteArray> line = dirlist.at(i).split('|');
+            if (line.at(0) == "entry")
             {
+                QString entry = CBMroutines::stringToPETSCII(line.at(2),true,true);
+
                 QTreeWidgetItem *item = new QTreeWidgetItem();
-                item->setText(0, rxDirEntry.cap(1));
-                item->setText(1, rxDirEntry.cap(2).toUpper());
-                item->setText(2, rxDirEntry.cap(3).toUpper());
+                item->setText(0, CBMroutines::stringToPETSCII(QString(line.at(1)),true));
+                item->setText(1, CBMroutines::stringToPETSCII(entry, true));
+                item->setText(2, CBMroutines::stringToPETSCII(QString(line.at(3)).toUpper(),true));
+                item->setData(3,Qt::DisplayRole, line.at(2));
                 ui->d64contents->addTopLevelItem(item);
             }
         }
@@ -61,13 +65,14 @@ void Selectd64FilesDialog::on_cancelBtn_clicked()
 
 void Selectd64FilesDialog::on_extractBtn_clicked()
 {
-    QStringList selectedItems;
+    QByteArray selectedItems;
     QAbstractItemModel *model = ui->d64contents->model();
-    QModelIndexList index = ui->d64contents->selectionModel()->selectedRows(1);
+    QModelIndexList index = ui->d64contents->selectionModel()->selectedRows(3);
 
     for (int i = 0; i < index.count(); i++)
     {
-        selectedItems << model->data(index.at(i)).toString();
+        selectedItems.append(model->data(index.at(i)).toByteArray());
+        selectedItems.append('\n');
     }
     emit sendSelectedContents(selectedItems);
 
