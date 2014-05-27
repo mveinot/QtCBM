@@ -72,28 +72,49 @@ char CBMroutines::cbm_petscii2ascii_c(char c)
     return ((isprint(c) ? c : '.'));
 }
 
-QString CBMroutines::stringToPETSCII(QString pS, bool usec64font = true, bool cbmctrlhasraw = false)
+QString CBMroutines::stringToPETSCII(QString pS, bool cbmctrlhasraw = false)
 {
     QString output;
-    if (usec64font && cbmctrlhasraw)
+    if (cbmctrlhasraw)
     {
         for (int i = 0; i < pS.length(); i++)
         {
             if (pS.at(i).unicode() < 256)
+            {
+                //qDebug() << "<256: " << pS.at(i).unicode();
                 output.append(pS.at(i).unicode()+57344);
+            }
             else
+            {
+                //qDebug() << ">256: " << pS.at(i).unicode();
                 output.append(pS.at(i).unicode());
+            }
         }
         return output;
     } else
         return pS;
 }
 
-QString CBMroutines::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true, bool usec64font = true, bool cbmctrlhasraw = false)
+QString CBMroutines::PETSCIItoString(QString text)
+{
+    qDebug() << text;
+    QString output;
+    for (int i = 0; i < text.length(); i++)
+    {
+        if (text.at(i).unicode() > 57344)
+        {
+            output.append(text.at(i).unicode()-57344);
+        }
+    }
+    qDebug() << output;
+    return output;
+}
+
+QString CBMroutines::stringToPETSCII(QByteArray pS, bool keepSpecialChars = true, bool cbmctrlhasraw = false)
 {
     QString output = "";
 
-    if (usec64font && cbmctrlhasraw)
+    if (cbmctrlhasraw)
     {
         for (int i = 0; i < pS.length(); i++)
         {
@@ -171,7 +192,7 @@ QString CBMroutines::formatFileSize(qint64 size)
 }
 
 
-QStringList CBMroutines::list_dir(QString filename)
+QByteArray CBMroutines::list_dir(QString filename)
 {
     static QStringList fileTypes = (QStringList() << "del" << "seq" << "prg" << "usr" << "rel" << "cbm" << "dir" << "???");
 
@@ -190,13 +211,13 @@ QStringList CBMroutines::list_dir(QString filename)
     if ((di = di_load_image(filename.toLocal8Bit().data())) == NULL)
     {
         qDebug() << "Load image failed";
-        return QStringList();
+        return QByteArray();
     }
 
     if ((dh = di_open(di, (unsigned char *)"$", T_PRG, (char *)"rb")) == NULL)
     {
         qDebug() << "Couldn't open directory";
-        return QStringList();
+        return QByteArray();
     }
 
     di_name_from_rawname(name, di_title(di));
@@ -205,7 +226,9 @@ QStringList CBMroutines::list_dir(QString filename)
     id[5] = 0;
 
     QString label = QString("0 \"%1\" %2").arg(ptoa((unsigned char *)name), -16).arg(ptoa((unsigned char *)id));
-    QStringList output = QStringList() << label;
+    //QStringList output = QStringList() << label;
+    QByteArray output;
+    output.append("label|").append(label).append('\n');
 
     if (di_read(dh, buffer, 254) != 254)
     {
@@ -215,7 +238,7 @@ QStringList CBMroutines::list_dir(QString filename)
         return output;
     }
 
-    QString dirEntry;
+    QByteArray dirEntry;
 
     /* Read directory blocks */
     while (di_read(dh, buffer, 254) == 254) {
@@ -231,18 +254,23 @@ QStringList CBMroutines::list_dir(QString filename)
                 //locked = buffer[offset + 2] & 0x40;
                 size = buffer[offset + 31]<<8 | buffer[offset + 30];
 
+                //qDebug() << name;
+
                 /* Convert to ascii and add quotes */
-                ptoa((unsigned char *)name);
-                sprintf(quotename, "\"%s\"", name);
+                //ptoa((unsigned char *)name);
+                //sprintf(quotename, "\"%s\"", name);
+
+                output.append("entry|").append(QString::number(size)).append('|').append(name).append('|').append(fileTypes.at(type)).append('\n');
 
                 /* Print directory entry */
-                dirEntry = QString("%1  %2%3").arg(size, -4).arg("\""+ptoa((unsigned char *)name)+"\"", -18).arg(fileTypes.at(type));
-                output << dirEntry;
+                //dirEntry = QString("%1  %2%3").arg(size, -4).arg("\""+stringToPETSCII(QByteArray(name), false, true, true)+"\"", -18).arg(fileTypes.at(type));
+                //output << dirEntry;
             }
         }
     }
 
-    output << QString("%1 blocks free").arg(di->blocksfree);
+    //output << QString("%1 blocks free").arg(di->blocksfree);
+    output.append("bfree|").append(QString::number(di->blocksfree)).append(" blocks free");
 
     di_close(dh);
     di_free_image(di);
@@ -250,7 +278,7 @@ QStringList CBMroutines::list_dir(QString filename)
     return output;
 }
 
-int CBMroutines::copyFromD64(QString d64, QString filename, QString path)
+int CBMroutines::copyFromD64(QString d64, QByteArray filename, QString path)
 {
     DiskImage *di;
     unsigned char buffer[4096];
@@ -273,11 +301,18 @@ int CBMroutines::copyFromD64(QString d64, QString filename, QString path)
         return -1;
     }
 
-    strncpy(name, filename.toLower().toLocal8Bit().data(), 16);
-    name[16] = 0;
-    atop((unsigned char *)name);
-    di_rawname_from_name(rawname, name);
+    //qDebug() << "filename: " << filename.data();
 
+    strncpy(name, filename.data(), 16);
+    name[16] = 0;
+
+    //qDebug() << "name: " << name;
+
+    //atop((unsigned char *)name);
+
+    //qDebug() << "atop: " << name;
+    di_rawname_from_name(rawname, name);
+    //qDebug() << "rawname: " << rawname;
     if ((infile = di_open(di, rawname, T_PRG, (char *)"rb")) == NULL) {
         qDebug() << "Couldn't open file for reading";
         di_free_image(di);
