@@ -574,7 +574,7 @@
                    <bool>false</bool>
                   </property>
                   <property name="columnCount">
-                   <number>4</number>
+                   <number>5</number>
                   </property>
                   <attribute name="headerDefaultSectionSize">
                    <number>65</number>
@@ -600,6 +600,11 @@
                   <column>
                    <property name="text">
                     <string>Type</string>
+                   </property>
+                  </column>
+                  <column>
+                   <property name="text">
+                    <string notr="true">5</string>
                    </property>
                   </column>
                  </widget>

@@ -50,7 +50,7 @@ public:
      * \brief getSelectedCBMFile
      * \return
      */
-    QString getSelectedCBMFile(QString);
+    QByteArray getSelectedCBMFile(QString);
     void resetUI();
     ~FileWindow();  
 
@@ -65,7 +65,7 @@ private slots:
     void act_viewFile();
     void act_viewD64();
 
-    void selectedD64contents(QStringList);
+    void selectedD64contents(QByteArray);
 
     void cbmStatusFinished(int,QProcess::ExitStatus);
     void cbmCopyProgress();
@@ -140,11 +140,11 @@ private:
     QString cableType;
     QString d64imageFile;
     QString fileFromArgs;
+    QString cbmFileName;
 
     // other variables
     bool showcmd;
     bool autorefresh;
-    bool usec64font;
     bool cbmctrlhasraw;
     bool generateRandomDiskname;
     int deviceid;

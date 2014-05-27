@@ -37,7 +37,7 @@ FileWindow::FileWindow(QWidget *parent) :
     ui(new Ui::FileWindow)
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile, *actOpenD64;
-    usec64font = false;
+    //usec64font = false;
     cbmctrlhasraw = false;
     selectedLocalFolder = "";
 
@@ -154,6 +154,7 @@ FileWindow::FileWindow(QWidget *parent) :
     ui->cbmFiles->header()->resizeSection(1, 60);
     ui->cbmFiles->header()->resizeSection(2, 140);
     ui->cbmFiles->header()->resizeSection(3, 40);
+    ui->cbmFiles->hideColumn(4);
 
     // set the colors of the CBM elements
     ui->diskLabel->setStyleSheet(c64LineStyle);
@@ -292,7 +293,7 @@ void FileWindow::loadSettings()
     transfermode = settings->value("transfermode", "auto").toString();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
-    usec64font = settings->value("usec64font", false).toBool();
+    //usec64font = settings->value("usec64font", false).toBool();
     generateRandomDiskname = settings->value("genrandomdisk", false).toBool();
     cableType = settings->value("cableType", "xum1541").toString();
 
@@ -336,8 +337,6 @@ void FileWindow::loadSettings()
         }
     }
 
-    if (usec64font)
-    {
         if (cbmctrlhasraw)
         {
             font8 = QFont("C64 Elite Mono", 7);
@@ -347,11 +346,6 @@ void FileWindow::loadSettings()
             font8 = QFont("C64 Pro Mono", 7);
             font11 = QFont("C64 Pro Mono", 10);
         }
-    } else
-    {
-        font8 = QFont("Consolas", 14);
-        font11 = QFont("Consolas", 14);
-    }
 
     ui->diskLabel->setFont(font11);
     ui->diskId->setFont(font11);
@@ -361,12 +355,14 @@ void FileWindow::loadSettings()
     ui->statusBar->showMessage("Settings read", 5000);
 }
 
-void FileWindow::selectedD64contents(QStringList list)
+void FileWindow::selectedD64contents(QByteArray list)
 {
     QModelIndexList index = ui->localFiles->selectionModel()->selectedIndexes();
     QFileSystemModel *model = (QFileSystemModel*)ui->localFiles->model();
     QFileInfo fi(model->filePath(index.at(0)));
     QDir dir(selectedLocalFolder);
+
+    QList<QByteArray> filelist = list.split('\n');
 
     if (!dir.exists(fi.completeBaseName()))
         if (!dir.mkdir(fi.completeBaseName()))
@@ -375,18 +371,19 @@ void FileWindow::selectedD64contents(QStringList list)
             return;
         }
 
-    //qDebug() << list.join('\n');
-
     progbar = new QProgressBar(this);
     progbar->setMinimum(0);
-    progbar->setMaximum(list.count());
+    progbar->setMaximum(filelist.count());
     progbar->setTextVisible(true);
     ui->statusBar->addPermanentWidget(progbar);
 
-    for (int i = 0; i < list.count(); i++)
+    for (int i = 0; i < filelist.count(); i++)
     {
-        CBMroutines::copyFromD64(model->filePath(index.at(0)), list.at(i), dir.absolutePath()+"/"+fi.completeBaseName());
-        progbar->setValue(i);
+        if (!filelist.at(i).isEmpty())
+        {
+            CBMroutines::copyFromD64(model->filePath(index.at(0)), filelist.at(i), dir.absolutePath()+"/"+fi.completeBaseName());
+            progbar->setValue(i);
+        }
     }
 
     ui->statusBar->removeWidget(progbar);
@@ -553,7 +550,7 @@ void FileWindow::act_viewD64()
 
         Selectd64FilesDialog *dlg = new Selectd64FilesDialog(this);
 
-        connect(dlg, SIGNAL(sendSelectedContents(QStringList)), this, SLOT(selectedD64contents(QStringList)));
+        connect(dlg, SIGNAL(sendSelectedContents(QByteArray)), this, SLOT(selectedD64contents(QByteArray)));
         dlg->setD64File(model->filePath(index.at(0)));
         dlg->exec();
     }
@@ -628,6 +625,9 @@ void FileWindow::cbmStatusFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmFileCopyFinished(int, QProcess::ExitStatus)
 {
+
+    qDebug() << proc_cbmcopy->readAllStandardError();
+    qDebug() << proc_cbmcopy->readAllStandardOutput();
     resetUI();
 
     ui->statusBar->showMessage("Copy completed");
@@ -953,7 +953,7 @@ void FileWindow::cbmValidateFinished(int, QProcess::ExitStatus)
 
 void FileWindow::cbmFormatFinished(int, QProcess::ExitStatus)
 {
-    QString output = proc_cbmFormat->readAllStandardError();
+    QString output = proc_cbmFormat->readAllStandardOutput();
 
     resetUI();
 
@@ -973,28 +973,36 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
     QList<QByteArray> dirlist = proc_cbmDir->readAllStandardOutput().split('\n');
     for (int i = 0; i < dirlist.count(); i++)
     {
-        QRegExp rxLabel("(0|1)\\s*.\"(.*)\"\\s*(.*)");
-        QRegExp rxDirEntry("(\\d+)\\s*\"(.*)\"\\s+(\\S\\S\\S)");
+        QRegExp rxLabel("(0|1)\\s.\"(.*)\"\\s*(.*)");
+        QRegExp rxDirEntry("(\\d+)\\s*.\"(.*)\"\\s+(\\S\\S\\S)");
         QRegExp rxFreeSpace("(\\d+)\\s\\S\\S\\S\\S\\S\\S\\s\\S\\S\\S\\S");
+        QByteArray rawname = dirlist.at(i).mid(6,16);
+        rawname = rawname.mid(0, rawname.indexOf('"'));
 
-        QString regstring = CBMroutines::stringToPETSCII(dirlist.at(i), usec64font, cbmctrlhasraw);
+        QString regstring = CBMroutines::stringToPETSCII(dirlist.at(i), true, cbmctrlhasraw);
+
+        //qDebug() << "raw: " << regstring;
 
         if (rxDirEntry.indexIn(regstring) >= 0)
         {
+            //qDebug() << "filename: " << rxDirEntry.cap(2);
             QTreeWidgetItem *item = new QTreeWidgetItem();
-            item->setText(0, CBMroutines::stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false, usec64font, cbmctrlhasraw));
-            item->setText(1, CBMroutines::stringToPETSCII(CBMroutines::formatFileSize(rxDirEntry.cap(1).toInt()*254), usec64font, cbmctrlhasraw));
-            item->setText(2, CBMroutines::stringToPETSCII(rxDirEntry.cap(2), usec64font, cbmctrlhasraw));
+            item->setText(0, CBMroutines::stringToPETSCII(rxDirEntry.cap(1).toLocal8Bit(), false, cbmctrlhasraw));
+            item->setText(1, CBMroutines::stringToPETSCII(CBMroutines::formatFileSize(rxDirEntry.cap(1).toInt()*254), cbmctrlhasraw));
+            item->setText(2, CBMroutines::stringToPETSCII(QString(rxDirEntry.cap(2)), cbmctrlhasraw));
             item->setText(3, rxDirEntry.cap(3).toUpper());
+            item->setData(4, Qt::DisplayRole, rawname);
             ui->cbmFiles->addTopLevelItem(item);
         } else if (rxFreeSpace.indexIn(QString(dirlist.at(i))) >= 0)
         {
+            //qDebug() << "freespace: " << dirlist.at(i);
             QString tmp_fs = QString(rxFreeSpace.cap(1)+" blocks ("+CBMroutines::formatFileSize(rxFreeSpace.cap(1).toInt()*254)+") free");
-            ui->freeSpace->setText(CBMroutines::stringToPETSCII(tmp_fs.toLatin1(), false, usec64font, cbmctrlhasraw));
+            ui->freeSpace->setText(CBMroutines::stringToPETSCII(tmp_fs.toLatin1(), false, cbmctrlhasraw));
         } else if (rxLabel.indexIn(QString(dirlist.at(i))) >= 0)
         {
-            ui->diskLabel->setText(CBMroutines::stringToPETSCII(rxLabel.cap(2).trimmed(), usec64font, cbmctrlhasraw));
-            ui->diskId->setText(CBMroutines::stringToPETSCII(rxLabel.cap(3).trimmed(), usec64font, cbmctrlhasraw));
+            //qDebug() << "label: " << dirlist.at(i);
+            ui->diskLabel->setText(CBMroutines::stringToPETSCII(rxLabel.cap(2).trimmed(), cbmctrlhasraw));
+            ui->diskId->setText(CBMroutines::stringToPETSCII(rxLabel.cap(3).trimmed(), cbmctrlhasraw));
         }
     }
     ui->cbmFiles->resizeColumnToContents(0);
@@ -1006,7 +1014,7 @@ void FileWindow::on_CBMDirectory_clicked()
 {
     QStringList params;
 
-    if (cbmctrlhasraw && usec64font)
+    if (cbmctrlhasraw)
         params << "--raw";
 
     params << "dir" << QString::number(deviceid);
@@ -1121,12 +1129,14 @@ void FileWindow::on_copyFromCBM_clicked()
 {
     QList<QTreeWidgetItem *> list = ui->cbmFiles->selectedItems();
 
+    /*
     if (list.count() == 1)
     {
         if (!selectedLocalFolder.isEmpty())
         {
-            QString cbmFileName = list.at(0)->text(2)+"."+list.at(0)->text(3);
-            if(confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName)))
+            //QString cbmFileName = list.at(0)->text(4); //+"."+list.at(0)->text(3);
+            cbmFileName = CBMroutines::ptoa((unsigned char *)list.at(0)->data(4,0).toByteArray().data());
+            if(confirmExecute(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName))
             {
                 progbar = new QProgressBar(this);
                 progbar->setMinimum(0);
@@ -1136,7 +1146,7 @@ void FileWindow::on_copyFromCBM_clicked()
                 ui->copyFromCBM->setEnabled(false);
                 ui->statusBar->showMessage("Reading: "+cbmFileName+"...");
 
-                proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName << "--output="+QDir::toNativeSeparators(selectedLocalFolder+"/"+cbmFileName), QIODevice::ReadWrite | QIODevice::Text);
+                proc_cbmcopy->start(cbmcopy, QStringList() << "--transfer="+transfermode << "-q" << "-r" << QString::number(deviceid) << cbmFileName, QIODevice::ReadWrite | QIODevice::Text);
                 if (!proc_cbmcopy->waitForStarted())
                 {
                     QMessageBox::warning(this,"Error", "Failed to execute "+cbmcopy+"\n\nExit status: "+QString::number(proc_cbmcopy->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
@@ -1155,7 +1165,7 @@ void FileWindow::on_copyFromCBM_clicked()
             return;
         }
     } else
-    {
+    { */
         QString fileName = QFileDialog::getSaveFileName(this, tr("Save Disk Image"), QDir::homePath(), tr("Disk Images (*.d64)"));
 
         if (!fileName.isEmpty() && confirmExecute(d64copy, QStringList() << "--transfer="+transfermode << QString::number(deviceid) << QDir::toNativeSeparators(fileName)))
@@ -1195,7 +1205,7 @@ void FileWindow::on_copyFromCBM_clicked()
                 currBlock = 0;
                 lastBlock = 0;
             }
-        }
+        //}
     }
 }
 
@@ -1217,7 +1227,7 @@ void FileWindow::cbmScratchFinished(int, QProcess::ExitStatus)
         on_CBMDirectory_clicked();
 }
 
-QString FileWindow::getSelectedCBMFile(QString message)
+QByteArray FileWindow::getSelectedCBMFile(QString message)
 {
     QList<QTreeWidgetItem *> items = ui->cbmFiles->selectedItems();
     if (items.count() != 1)
@@ -1225,12 +1235,30 @@ QString FileWindow::getSelectedCBMFile(QString message)
         QMessageBox::warning(this, "QtCBM", message, QMessageBox::Ok, QMessageBox::Ok);
         return "";
     }
-    return items.at(0)->data(2,0).toString().toUpper();
+    return items.at(0)->data(4,0).toByteArray();
+}
+
+QString subWildCard(QString in)
+{
+    QString output;
+
+    for (int i = 0; i < in.length(); i++)
+    {
+        if (in.at(i) > 127)
+        {
+            output.append('?');
+        } else
+        {
+            output.append(in.at(i));
+        }
+    }
+    return output;
 }
 
 void FileWindow::on_CBMScratch_clicked()
 {
-    QString cbmFilename = getSelectedCBMFile("Please select one item to delete.");
+    QString cbmFilename = subWildCard(getSelectedCBMFile("Please select one item to delete."));
+    //QByteArray cbmFilename = "2E??????????????";
     if (cbmFilename.isEmpty())
         return;
 
