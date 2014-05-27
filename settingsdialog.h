@@ -29,6 +29,16 @@ private slots:
     void on_browse_cbmcopy_clicked();
     void on_browse_morse_clicked();
 
+    void on_cbmctrl_reset_clicked();
+
+    void on_d64copy_reset_clicked();
+
+    void on_cbmcopy_reset_clicked();
+
+    void on_cbmforng_reset_clicked();
+
+    void on_morse_reset_clicked();
+
 private:
     Ui::settingsDialog *ui;
     QSettings *settings;

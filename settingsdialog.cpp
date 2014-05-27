@@ -23,7 +23,7 @@ settingsDialog::settingsDialog(QWidget *parent) :
     ui->input_cbmdevice->setValue(settings->value("deviceid", 8).toInt());
     ui->autoRefresh->setChecked(settings->value("autorefresh", true).toBool());
     ui->showCommands->setChecked(settings->value("showcmd", false).toBool());
-    ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
+    //ui->useC64font->setChecked(settings->value("usec64font", false).toBool());
     ui->genRandomDiskname->setChecked(settings->value("genrandomdisk", false).toBool());
     QString transfermode = settings->value("transfermode", "auto").toString();
     QString cableType = settings->value("cableType", "xum1541").toString();
@@ -99,7 +99,7 @@ void settingsDialog::on_buttonBox_accepted()
     settings->setValue("transfermode", getTransferMode());
     settings->setValue("showcmd", ui->showCommands->isChecked());
     settings->setValue("autorefresh", ui->autoRefresh->isChecked());
-    settings->setValue("usec64font", ui->useC64font->isChecked());
+    //settings->setValue("usec64font", ui->useC64font->isChecked());
     settings->setValue("genrandomdisk", ui->genRandomDiskname->isChecked());
     settings->setValue("cableType", getCableType());
     settings->sync();
@@ -129,4 +129,29 @@ QString settingsDialog::getTransferMode()
     if (ui->trAuto->isChecked())
         return "auto";
     return "auto";
+}
+
+void settingsDialog::on_cbmctrl_reset_clicked()
+{
+    ui->input_cbmctrl->setText(findCBMUtil("cbmctrl"));
+}
+
+void settingsDialog::on_d64copy_reset_clicked()
+{
+    ui->input_d64copy->setText(findCBMUtil("d64copy"));
+}
+
+void settingsDialog::on_cbmcopy_reset_clicked()
+{
+    ui->input_cbmcopy->setText(findCBMUtil("cbmcopy"));
+}
+
+void settingsDialog::on_cbmforng_reset_clicked()
+{
+    ui->input_cbmforng->setText(findCBMUtil("cbmforng"));
+}
+
+void settingsDialog::on_morse_reset_clicked()
+{
+    ui->input_morse->setText(findCBMUtil("morse"));
 }
