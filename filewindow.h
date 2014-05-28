@@ -102,6 +102,10 @@ private slots:
     void on_actionMorse_Code_triggered();
     void on_action_Quit_triggered();
 
+    void on_copyCBMfileToDisk_clicked();
+
+    void on_copyFileFromCBMdisk_clicked();
+
 private:
 
     // Qt objects

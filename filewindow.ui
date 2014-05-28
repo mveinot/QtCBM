@@ -298,27 +298,23 @@
            <property name="verticalSpacing">
             <number>10</number>
            </property>
-           <item row="1" column="0">
-            <widget class="QToolButton" name="copyToCBM">
-             <property name="font">
-              <font>
-               <pointsize>11</pointsize>
-              </font>
+           <item row="3" column="0">
+            <widget class="QToolButton" name="copyCBMfileToDisk">
+             <property name="toolTip">
+              <string>Copy file(s) to disk</string>
              </property>
              <property name="text">
-              <string>-&gt;</string>
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset resource="QtCBM.qrc">
+               <normaloff>:/res/icons/file-right.png</normaloff>:/res/icons/file-right.png</iconset>
              </property>
              <property name="iconSize">
               <size>
                <width>30</width>
                <height>20</height>
               </size>
-             </property>
-             <property name="autoRaise">
-              <bool>false</bool>
-             </property>
-             <property name="arrowType">
-              <enum>Qt::RightArrow</enum>
              </property>
             </widget>
            </item>
@@ -345,8 +341,15 @@
                <pointsize>11</pointsize>
               </font>
              </property>
+             <property name="toolTip">
+              <string>Create D64 image from disk</string>
+             </property>
              <property name="text">
               <string>&lt;-</string>
+             </property>
+             <property name="icon">
+              <iconset resource="QtCBM.qrc">
+               <normaloff>:/res/icons/disk-left.png</normaloff>:/res/icons/disk-left.png</iconset>
              </property>
              <property name="iconSize">
               <size>
@@ -358,11 +361,11 @@
               <bool>false</bool>
              </property>
              <property name="arrowType">
-              <enum>Qt::LeftArrow</enum>
+              <enum>Qt::NoArrow</enum>
              </property>
             </widget>
            </item>
-           <item row="3" column="0">
+           <item row="5" column="0">
             <spacer name="verticalSpacer_2">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -374,6 +377,57 @@
               </size>
              </property>
             </spacer>
+           </item>
+           <item row="1" column="0">
+            <widget class="QToolButton" name="copyToCBM">
+             <property name="font">
+              <font>
+               <pointsize>11</pointsize>
+              </font>
+             </property>
+             <property name="toolTip">
+              <string>Transfer D64 image to disk</string>
+             </property>
+             <property name="text">
+              <string>-&gt;</string>
+             </property>
+             <property name="icon">
+              <iconset resource="QtCBM.qrc">
+               <normaloff>:/res/icons/disk-right.png</normaloff>:/res/icons/disk-right.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>30</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="autoRaise">
+              <bool>true</bool>
+             </property>
+             <property name="arrowType">
+              <enum>Qt::NoArrow</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="0">
+            <widget class="QToolButton" name="copyFileFromCBMdisk">
+             <property name="toolTip">
+              <string>Copy file from disk</string>
+             </property>
+             <property name="text">
+              <string>...</string>
+             </property>
+             <property name="icon">
+              <iconset resource="QtCBM.qrc">
+               <normaloff>:/res/icons/file-left.png</normaloff>:/res/icons/file-left.png</iconset>
+             </property>
+             <property name="iconSize">
+              <size>
+               <width>30</width>
+               <height>20</height>
+              </size>
+             </property>
+            </widget>
            </item>
           </layout>
          </item>
