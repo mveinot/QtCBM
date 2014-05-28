@@ -16,6 +16,7 @@ public:
     static QString randomString(const int len);
     static QString formatFileSize(qint64 size);
     static char cbm_petscii2ascii_c(char c);
+    static char * cbm_petscii2ascii(char *Str);
     static QString ptoa(unsigned char *s);
     static void atop(unsigned char *s);
 

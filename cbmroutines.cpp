@@ -72,6 +72,16 @@ char CBMroutines::cbm_petscii2ascii_c(char c)
     return ((isprint(c) ? c : '.'));
 }
 
+char * CBMroutines::cbm_petscii2ascii(char *Str)
+{
+    char *p;
+    for (p = Str; *p; p++)
+    {
+        *p = cbm_petscii2ascii_c(*p);
+    }
+    return Str;
+}
+
 QString CBMroutines::stringToPETSCII(QString pS, bool cbmctrlhasraw = false)
 {
     QString output;
