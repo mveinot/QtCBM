@@ -950,6 +950,10 @@ void FileWindow::cbmDirFinished(int, QProcess::ExitStatus)
 {
     resetUI();
 
+    qDebug() << "returned from cbmdir. exit code:" << proc_cbmDir->exitCode();
+    qDebug() << "exit status:" << proc_cbmDir->exitStatus();
+    qDebug() << "error:" << proc_cbmDir->errorString();
+
     // clear the file list
     ui->cbmFiles->clear();
 
@@ -1011,6 +1015,7 @@ void FileWindow::on_CBMDirectory_clicked()
         ui->statusBar->addPermanentWidget(progbar);
 
         proc_cbmDir->start(cbmctrl, QStringList() << params, QIODevice::ReadWrite | QIODevice::Text);
+        qDebug() << "Executed:" << proc_cbmDir->program() << "with args:" << proc_cbmDir->arguments();
         if (!proc_cbmDir->waitForStarted())
         {
             QMessageBox::warning(this,"Error", "Failed to execute "+cbmctrl+"\n\nExit status: "+QString::number(proc_cbmDir->exitCode()),QMessageBox::Ok, QMessageBox::Ok);
