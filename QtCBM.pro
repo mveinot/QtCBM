@@ -26,7 +26,8 @@ HEADERS  += filewindow.h \
     aboutdialog.h \
     detailsinfodialog.h \
     cbmroutines.h \
-    selectd64filesdialog.h
+    selectd64filesdialog.h \
+    version.h
 
 FORMS    += filewindow.ui \
     settingsdialog.ui \
