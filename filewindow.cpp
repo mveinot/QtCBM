@@ -165,6 +165,11 @@ FileWindow::FileWindow(QWidget *parent) :
 
 FileWindow::~FileWindow()
 {
+	// save current window geometry
+    settings->setValue("ui/geometry", this->saveGeometry());
+    settings->setValue("ui/state", this->saveState());
+    settings->sync();
+
     delete ui;
 }
 
@@ -284,6 +289,9 @@ void FileWindow::loadSettings()
     //qDebug() << settingsDialog::findCBMUtil("cbmctrl");
 
     // read in settings
+    this->restoreGeometry(settings->value("ui/geometry").toByteArray());
+    this->restoreState(settings->value("ui/state").toByteArray());
+
     cbmctrl = settings->value("tools/cbmctrl", settingsDialog::findCBMUtil("cbmctrl")).toString();
     cbmforng = settings->value("tools/cbmforng", settingsDialog::findCBMUtil("cbmforng")).toString();
     d64copy = settings->value("tools/d64copy", settingsDialog::findCBMUtil("d64copy")).toString();
@@ -293,7 +301,6 @@ void FileWindow::loadSettings()
     transfermode = settings->value("transfermode", "auto").toString();
     showcmd = settings->value("showcmd", false).toBool();
     autorefresh = settings->value("autorefresh", true).toBool();
-    //usec64font = settings->value("usec64font", false).toBool();
     generateRandomDiskname = settings->value("genrandomdisk", false).toBool();
     cableType = settings->value("cableType", "xum1541").toString();
 
