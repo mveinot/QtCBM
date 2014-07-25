@@ -37,7 +37,6 @@ FileWindow::FileWindow(QWidget *parent) :
     ui(new Ui::FileWindow)
 {
     QAction *actMakeDir, *actRenameFile, *actDeleteFile, *actViewFile, *actOpenD64;
-    //usec64font = false;
     cbmctrlhasraw = false;
     selectedLocalFolder = "";
 
@@ -251,14 +250,11 @@ void FileWindow::writeCBMconf()
     QString confPath = QCoreApplication::applicationDirPath()+"/etc/opencbm.conf";
     QDir appPath(QCoreApplication::applicationDirPath()); //+"/etc");
 
-    //qDebug() << appPath.absolutePath();
-
     if (!appPath.exists("etc/"))
     {
         if (!appPath.mkdir("etc/"))
         {
             QMessageBox::warning(this,"QtCBM","Unable to create opencbm.conf", QMessageBox::Ok, QMessageBox::Ok);
-            //return;
         }
     }
 
@@ -286,12 +282,13 @@ void FileWindow::loadSettings()
     QFont font11;
     QFont font8;
 
-    //qDebug() << settingsDialog::findCBMUtil("cbmctrl");
-
     // read in settings
+
+    // restore window size/position/state
     this->restoreGeometry(settings->value("ui/geometry").toByteArray());
     this->restoreState(settings->value("ui/state").toByteArray());
 
+    // read in application settings
     cbmctrl = settings->value("tools/cbmctrl", settingsDialog::findCBMUtil("cbmctrl")).toString();
     cbmforng = settings->value("tools/cbmforng", settingsDialog::findCBMUtil("cbmforng")).toString();
     d64copy = settings->value("tools/d64copy", settingsDialog::findCBMUtil("d64copy")).toString();
